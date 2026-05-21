@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0a0908;
+  --bg-secondary: #1a1715;
+  --accent-brass: #c9a961;
+  --accent-copper: #b87333;
+  --text-primary: #f5f1ea;
+  --text-muted: #8b8680;
+  --barber-red: #c8362d;
+  --barber-blue: #1e3a5f;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-brass: var(--accent-brass);
+  --color-copper: var(--accent-copper);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-barber-red: var(--barber-red);
+  --color-barber-blue: var(--barber-blue);
+
+  --font-display: var(--font-playfair);
+  --font-body: var(--font-inter);
+  --font-accent: var(--font-bebas);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+/* Brass focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent-brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Custom selection */
+::selection {
+  background: var(--accent-brass);
+  color: var(--bg-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-copper);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-brass);
+}
+
+/* Utility: thin uppercase label */
+.eyebrow {
+  font-family: var(--font-bebas), sans-serif;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--accent-brass);
+  font-size: 0.95rem;
+}
+
+.heading-display {
+  font-family: var(--font-playfair), serif;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+}
+
+/* Grain / texture overlay */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.split-char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
