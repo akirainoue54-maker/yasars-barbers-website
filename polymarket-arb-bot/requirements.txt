@@ -1,0 +1,7 @@
+requests>=2.31
+
+# Live trading only (paper mode and tests run without it):
+py-clob-client>=0.20
+
+# Development / tests:
+pytest>=8
