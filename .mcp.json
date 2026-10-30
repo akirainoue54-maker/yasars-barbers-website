@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "yt-dlp": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/yt-dlp-mcp.sh"]
+    }
+  }
+}

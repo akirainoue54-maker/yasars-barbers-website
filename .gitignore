@@ -141,3 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Downloaded reference videos (third-party content, keep out of git)
+refs/shorts/
