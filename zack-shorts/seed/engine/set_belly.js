@@ -9,21 +9,25 @@ const clothNormal = normalTex(512, 512, (u, v) => 0.5 * Math.sin(u * 600) * 0.1 
 // Torso from a lathe profile, elliptical cross-section, navel at +z, y=0
 function torsoGeometry() {
   const prof = [];
-  for (let i = 0; i <= 60; i++) { const y = -1.6 + i / 60 * 3.4;
+  for (let i = 0; i <= 240; i++) { const y = -1.6 + i / 240 * 3.4;
     const r = 0.92 + 0.08 * Math.exp(-Math.pow((y - 0.05) / 0.45, 2)) - 0.05 * Math.exp(-Math.pow((y - 0.75) / 0.3, 2)) + 0.08 * smooth(clamp((y - 1.0) / 0.8)) + 0.05 * smooth(clamp((-y - 0.8) / 0.6));
     prof.push(new THREE.Vector2(r, y)); }
-  const g = new THREE.LatheGeometry(prof, 160);
-  const p = g.attributes.position, v = new THREE.Vector3();
+  const g = new THREE.LatheGeometry(prof, 400);
+  const p = g.attributes.position, v = new THREE.Vector3(); const col = new Float32Array(p.count * 3);
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
     v.z *= 0.72; v.x *= 1.02;
     // navel: soft dip with a rim
-    const dx = v.x, dy = v.y - 0.02; const d2 = (dx * dx) / 0.004 + (dy * dy) / 0.006;
-    if (v.z > 0) { v.z -= 0.13 * Math.exp(-d2) - 0.012 * Math.exp(-Math.pow(Math.sqrt(d2) - 1.6, 2) * 2) ; }
+    const dx = v.x, dy = v.y - 0.02; const d2 = (dx * dx) / 0.0016 + (dy * dy) / 0.0028;
+    let dark = 0;
+    if (v.z > 0) { v.z -= 0.075 * Math.exp(-d2) - 0.014 * Math.exp(-Math.pow(Math.sqrt(d2) - 1.7, 2) * 1.5); dark = Math.exp(-d2 * 0.8) * 0.35; }
+    const n = 0.95 + 0.05 * noise3(v.x * 8, v.y * 8, v.z * 8);
+    col[i * 3] = n * (1 - dark * 0.6); col[i * 3 + 1] = n * (1 - dark); col[i * 3 + 2] = n * (1 - dark * 0.9);
     // linea / subtle belly shape
     v.z += 0.03 * Math.exp(-Math.pow((v.y + 0.25) / 0.35, 2)) * smooth(clamp(v.z / 0.6));
     p.setXYZ(i, v.x, v.y, v.z);
   }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   g.computeVertexNormals(); return g;
 }
 
@@ -43,7 +47,7 @@ export function buildBelly() {
       b.addColorStop(0, 'rgba(255,252,240,0.5)'); b.addColorStop(1, 'rgba(255,250,240,0)'); g.fillStyle = b; g.beginPath(); g.arc(x, y, s, 0, 7); g.fill(); }
   });
   const back = new THREE.Mesh(new THREE.PlaneGeometry(22, 38), new THREE.MeshBasicMaterial({ map: tex, color: 0x6a6058 })); back.position.set(0, 0, -7); scene.add(back);
-  const skinMat = new THREE.MeshPhysicalMaterial({ color: 0xe0a284, roughness: 0.5, sheen: 0.8, sheenColor: new THREE.Color(0xffc2a8), sheenRoughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.4,
+  const skinMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: 0xe0a284, roughness: 0.5, sheen: 0.8, sheenColor: new THREE.Color(0xffc2a8), sheenRoughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.4,
     normalMap: skinNormal, normalScale: new THREE.Vector2(0.35, 0.35) });
   skinNormal.repeat.set(4, 4);
   const torso = new THREE.Mesh(torsoGeometry(), skinMat); torso.castShadow = torso.receiveShadow = true; scene.add(torso);
@@ -61,7 +65,7 @@ export function buildBelly() {
   // vine: out of the navel toward camera, then curling up
   const pts = [navel.clone().add(V(0, 0, -0.03)), navel.clone().add(V(0.02, 0.02, 0.18)), V(0.12, 0.18, 1.25), V(0.05, 0.5, 1.55), V(-0.25, 0.75, 1.5), V(-0.35, 0.95, 1.2), V(-0.15, 1.2, 1.05)];
   const vine = new GrowTube(pts, 0.05, stemMat, { segs: 200, radial: 14, taper: 0.35 }); scene.add(vine.mesh);
-  const branch = new GrowTube([V(0.12, 0.2, 1.24), V(0.35, 0.05, 1.45), V(0.5, -0.12, 1.5)], 0.03, stemMat, { segs: 60, radial: 10, taper: 0.6 }); scene.add(branch.mesh);
+  const branch = new GrowTube([V(0.05, 0.5, 1.55), V(0.2, 0.74, 1.5), V(0.3, 0.8, 1.42)], 0.025, stemMat, { segs: 60, radial: 10, taper: 0.6 }); scene.add(branch.mesh);
   const leaves = []; for (let i = 0; i < 7; i++) { const l = makeLeaf(); l.scale.setScalar(0.001); scene.add(l); leaves.push(l); }
   const tendrils = [0.35, 0.62, 0.85].map((u, i) => { const base = vine.pointAt(u); return new GrowTube(tendrilPoints(base, V(i % 2 ? -1 : 1, 0.4, 0.3), 0.32, 2.5, 0.07, i), 0.008, stemMat, { segs: 80, radial: 6, taper: 0.5 }); });
   tendrils.forEach((t) => scene.add(t.mesh));

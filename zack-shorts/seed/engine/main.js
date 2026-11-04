@@ -48,14 +48,19 @@ window.renderFrame = (t) => {
   const r = shot.run(t, camera);
   camera.aspect = W / H; camera.updateProjectionMatrix();
   renderer.toneMappingExposure = (r.exposure ?? 1.0) * (GAINS[SHOTS.indexOf(shot)] ?? 1);
-  renderPass.scene = r.scene; bokeh.scene = r.scene;
-  const d = r.dof || { focus: 1, aperture: 0, maxblur: 0 };
-  bokeh.enabled = d.aperture > 0;
-  bokeh.uniforms.focus.value = d.focus; bokeh.uniforms.aperture.value = d.aperture; bokeh.uniforms.maxblur.value = d.maxblur ?? 0.01;
-  composer.render();
-  ctx.save();
-  ctx.clearRect(0, 0, W, H);
-  ctx.drawImage(renderer.domElement, 0, 0);
+  const draw = (rr) => {
+    renderPass.scene = rr.scene; bokeh.scene = rr.scene;
+    const d = rr.dof || { focus: 1, aperture: 0, maxblur: 0 };
+    bokeh.enabled = d.aperture > 0;
+    bokeh.uniforms.focus.value = d.focus; bokeh.uniforms.aperture.value = d.aperture; bokeh.uniforms.maxblur.value = d.maxblur ?? 0.01;
+    composer.render();
+  };
+  ctx.save(); ctx.clearRect(0, 0, W, H);
+  if (r.mblur) { // average sub-frames across the shutter for fast camera moves
+    const n = r.mblur.n;
+    for (let i = 0; i < n; i++) { const ts = t + (i / (n - 1) - 0.5) * r.mblur.dt; const rr = shot.run(ts, camera); camera.updateProjectionMatrix(); draw(rr); ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(renderer.domElement, 0, 0); }
+    ctx.globalAlpha = 1; shot.run(t, camera);
+  } else { draw(r); ctx.drawImage(renderer.domElement, 0, 0); }
   ctx.restore();
   drawOverlay(ctx, t, r, DATA, renderer.domElement);
   return out.toDataURL('image/jpeg', 0.93);

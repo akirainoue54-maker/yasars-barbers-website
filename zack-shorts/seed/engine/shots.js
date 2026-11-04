@@ -23,7 +23,7 @@ export async function setup({ renderer, env }) {
   // extras living in the mouth set for the ending
   SPLIT = makeSplitSeed(0.105); M.scene.add(SPLIT.group); SPLIT.group.visible = false;
   CRUMBS = new Droplets(26, new THREE.MeshPhysicalMaterial({ color: 0x2a1a10, roughness: 0.35, clearcoat: 1 }), { size: 0.0035, seed: 44 }); M.scene.add(CRUMBS.mesh);
-  JUICE = new Droplets(90, new THREE.MeshPhysicalMaterial({ color: 0xff3048, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.85 }), { size: 0.012, seed: 45 }); M.scene.add(JUICE.mesh);
+  JUICE = new Droplets(70, new THREE.MeshPhysicalMaterial({ color: 0xff2a40, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.75 }), { size: 0.005, seed: 45 }); M.scene.add(JUICE.mesh);
   KSPARK = new Sparkles(22, '#ffd76a', { seed: 46, size: 0.022, star: true }); M.scene.add(KSPARK.group);
   KGLOW = glow('#ffd080', 0.5); KGLOW.material.opacity = 0; M.scene.add(KGLOW);
   { // navel position on the torso surface
@@ -55,8 +55,18 @@ const shake = (t, amp, f = 40) => V(Math.sin(t * f) * amp, Math.cos(t * f * 1.3)
 // ---------------- SHOT A: bite -> tongue -> gulp -> down the throat (one continuous take) ----------------
 const sliceQ = basis(V(0.9, -0.25, 0.85), V(0.05, 0.25, -1));
 const seedPathA = track([[0, [0.0, -0.03, 0.4]], [0.78, [-0.01, -0.03, 0.17]]]);
-const camPosA = track([[0, [0, 0.0, -0.62]], [0.72, [0, -0.01, -0.42]], [1.05, [0, 0.03, -0.48]], [1.55, [0, 0.14, -0.55]], [2.3, [0, 0.02, -1.55]], [2.68, [0, -0.32, -2.42]]]);
-const camLookA = track([[0, [0.02, -0.08, 2]], [0.72, [0.02, -0.12, 2]], [1.05, [0.0, -0.1, 1.5]], [1.55, [0, -0.25, -1.4]], [2.3, [0, -0.3, -2.4]], [2.68, [0, -1.6, -2.85]]]);
+const BITE_POS = V(-0.01, -0.03, 0.17);
+// the swallowed seed after the bite: arcs over onto the tongue, slides back, drops into the throat
+function seedA(t) {
+  const land = V(0.03, -0.135, -0.82), back = V(0.0, -0.19, -1.55);
+  if (t < 1.25) { const k = seg(t, 0.86, 1.25, ease.inOutSine); const p = BITE_POS.clone().lerp(land, k); p.y += 0.2 * Math.sin(k * Math.PI); return p; }
+  if (t < 1.45) { const p = land.clone(); p.y += 0.035 * Math.sin(seg(t, 1.25, 1.45) * Math.PI); return p; }
+  if (t < 2.4) return land.clone().lerp(back, seg(t, 1.45, 2.4, ease.inOutSine));
+  if (t < 2.75) return back.clone().lerp(M.tunnel.at(0.235), seg(t, 2.4, 2.75, ease.in));
+  return M.tunnel.at(lerp(0.2, 0.58, seg(t, 2.68, 3.35, ease.in)) + 0.035);
+}
+const camPosA = track([[0, [0, 0.0, -0.62]], [0.72, [0, -0.01, -0.42]], [1.05, [0, 0.04, -0.4]], [1.55, [0.02, 0.1, -0.42]], [2.3, [0, 0.04, -1.12]], [2.68, [0, -0.12, -1.95]]]);
+const camLookA = track([[0, [0.02, -0.08, 2]], [0.72, [0.02, -0.12, 2]], [1.05, [0.0, -0.1, 1.5]], [1.55, [0.03, -0.17, -0.85]], [2.3, [0, -0.24, -1.7]], [2.68, [0, -1.5, -2.75]]]);
 function shotA(t, cam) {
   const S = M;
   // jaw: open, chomp at 0.72-0.88, reopen
@@ -75,43 +85,51 @@ function shotA(t, cam) {
   const seed = S.seed, chunk = S.chunk;
   S.slice.updateMatrixWorld(true);
   const sp = bitten.getWorldPosition(V(0, 0, 0));
-  let camU = 0;
+  BITE_POS.copy(seedPathA(0.78)).add(V(0, 0, 0));
   if (t < 0.86) { seed.visible = false; chunk.visible = false; }
   else {
     seed.visible = true; chunk.visible = t < 2.2;
-    const land = V(0.04, -0.17, -0.25), back = V(0.0, -0.2, -1.6), drop = S.tunnel.at(0.215);
-    let p;
-    if (t < 1.25) { const k = seg(t, 0.86, 1.25, ease.in); p = sp.clone().lerp(land, k); p.y += 0.12 * Math.sin(k * Math.PI); }
-    else if (t < 1.4) { const k = seg(t, 1.25, 1.4); p = land.clone(); p.y += 0.04 * Math.sin(k * Math.PI); }
-    else if (t < 2.35) { const k = seg(t, 1.55, 2.35, ease.in); p = land.clone().lerp(back, k); }
-    else if (t < 2.75) { const k = seg(t, 2.35, 2.75, ease.in); p = back.clone().lerp(drop, k); }
-    else { const u = lerp(0.215, 0.62, seg(t, 2.75, 3.35, ease.in)); p = S.tunnel.at(u); }
+    const p = seedA(t);
     seed.position.copy(p);
-    seed.rotation.set(t * 2.2, t * 3.1, t * 1.3);
-    chunk.position.copy(p).add(V(0.09, 0.02, 0.04)); chunk.rotation.set(t * 1.7, t, 0);
+    if (t < 1.25 || t > 2.4) seed.rotation.set(t * 2.2, t * 3.1, t * 1.3);
+    else seed.rotation.set(Math.PI / 2 + 0.08 * Math.sin(t * 9) * (1 - seg(t, 1.25, 1.6)), 0.4 + 0.3 * seg(t, 1.45, 2.4), 0.1);
+    chunk.position.copy(p).add(V(-0.13, 0.015, 0.07)); chunk.rotation.set(t * 1.7, t, 0);
   }
-  JUICE.update(t - 0.8, sp.clone().add(V(0, 0.02, -0.05)), { speed: 1.1, gravity: 3, up: V(0, 0.4, -1) });
+  JUICE.update(t - 0.8, sp.clone().add(V(0, 0.02, 0.02)), { speed: 0.8, gravity: 3, up: V(0, 1, 0.3) });
   JUICE.mesh.visible = t > 0.79 && t < 1.6;
   SPLIT.group.visible = false; KGLOW.material.opacity = 0; KSPARK.group.visible = false; CRUMBS.mesh.visible = false;
-  // camera
-  let pos, look;
-  if (t < 2.68) { pos = camPosA(t); look = camLookA(t); }
+  // camera: push in -> chomp -> whip around (yaw 180) -> chase the seed over the tongue -> dive down the throat
+  let pos, look, quat = null;
+  const follow = (tt) => { const sp2 = seedA(tt); return [sp2.clone().add(V(0.0, 0.17, 0.34)), sp2.clone().add(V(0, -0.02, -0.22))]; };
+  if (t < 1.05) { pos = camPosA(t); look = camLookA(t); }
+  else if (t < 1.5) {
+    const k = seg(t, 1.05, 1.5, ease.inOut); const [fp, fl] = follow(1.5);
+    pos = camPosA(1.05).lerp(fp, k);
+    const d0 = camLookA(1.05).sub(camPosA(1.05)).normalize(), d1 = fl.clone().sub(fp).normalize();
+    const yaw0 = Math.atan2(-d0.x, -d0.z), pitch0 = Math.asin(d0.y), pitch1 = Math.asin(d1.y);
+    let yaw1 = Math.atan2(-d1.x, -d1.z); if (yaw1 - yaw0 > Math.PI) yaw1 -= Math.PI * 2; if (yaw0 - yaw1 > Math.PI) yaw1 += Math.PI * 2;
+    const e = new THREE.Euler(lerp(pitch0, pitch1, k) + 0.25 * Math.sin(k * Math.PI), lerp(yaw0, yaw1, k), 0.12 * Math.sin(k * Math.PI), 'YXZ');
+    quat = new THREE.Quaternion().setFromEuler(e); look = pos.clone().add(V(0, 0, -1).applyQuaternion(quat));
+  } else if (t < 2.4) { [pos, look] = follow(t); }
+  else if (t < 2.68) { const k = seg(t, 2.4, 2.68, ease.inOut); const [fp, fl] = follow(2.4); pos = fp.lerp(S.tunnel.at(0.2, 0, 0.02), k); look = fl.lerp(S.tunnel.at(0.25), k); }
   else {
     const u = lerp(0.2, 0.58, seg(t, 2.68, 3.35, ease.in));
     pos = S.tunnel.at(u, 0, 0.02); look = S.tunnel.at(u + 0.05);
   }
   pos.add(shake(t, 0.012 * seg(t, 0.8, 0.84) * (1 - seg(t, 0.84, 1.05))));
-  const fov = ktrack([[0, 58], [0.72, 54], [1.05, 62], [1.55, 66], [2.4, 62], [3.3, 78]])(t);
-  aim(cam, pos, look, fov, ktrack([[0, 0], [0.8, -0.04], [1.3, 0.08], [2.3, 0], [3.3, 0.3]])(t));
+  const fov = ktrack([[0, 58], [0.72, 54], [1.05, 62], [1.5, 60], [2.4, 60], [3.3, 78]])(t);
+  aim(cam, pos, look, fov, ktrack([[0, 0], [0.8, -0.04], [1.05, 0], [1.5, 0], [2.3, 0], [3.3, 0.3]])(t));
+  if (quat) cam.quaternion.copy(quat);
   // peristaltic rings racing down the esophagus during the gulp
   const g = seg(t, 2.3, 2.6);
   S.tunnel.update((u) => 1 - g * 0.22 * Math.max(0, Math.sin(u * 70 - t * 22)) * smooth(clamp((u - 0.22) / 0.05)));
   S.camLight.position.copy(pos).add(cam.getWorldDirection(V(0, 0, 0)).multiplyScalar(-0.35)).add(V(0, 0.08, 0));
   S.fill.position.copy(t < 1.4 ? V(0, 0.15, -0.9) : pos.clone().add(V(0, 0.1, 0)));
   const fx = { flash: seg(t, 3.2, 3.33, ease.in) * 0.9, vignette: 0.3 };
+  const mblur = t > 1.08 && t < 1.47 ? { n: 7, dt: 1 / 48 } : null;
   // focus: on the seed while it's visible, else ~0.6 ahead
   const fd = seed.visible ? cam.position.distanceTo(seed.position) : (t < 0.86 ? cam.position.distanceTo(sp) : 0.6);
-  return { scene: S.scene, fx, exposure: 1.05, dof: { focus: fd, aperture: 0.012, maxblur: 0.012 } };
+  return { scene: S.scene, fx, exposure: 1.05, mblur, dof: { focus: fd, aperture: 0.012, maxblur: 0.012 } };
 }
 
 // ---------------- SHOT B1: the myth - the seed sprouts in the stomach ----------------
@@ -243,8 +261,8 @@ function shotD12(t, cam) {
 }
 
 // ---------------- SHOT B2: the vine bursts out of the belly button ----------------
-const camB2 = track([[5.55, [0.12, 0.06, 1.05]], [W(18), [0.16, 0.08, 1.0]], [6.45, [0.7, 0.35, 2.7]], [7.25, [-1.3, 0.55, 3.0]], [W(24), [-1.05, 0.7, 2.75]]]);
-const lookB2 = track([[5.55, [0, 0.03, 0.6]], [W(18), [0, 0.04, 0.6]], [6.45, [0.0, 0.35, 0.9]], [7.25, [0.0, 0.5, 1.0]], [W(24), [0.15, 0.35, 1.1]]]);
+const camB2 = track([[5.55, [0.35, 0.3, 2.35]], [W(18), [0.18, 0.1, 1.45]], [6.45, [0.7, 0.35, 2.7]], [7.25, [-1.3, 0.55, 3.0]], [W(24), [-1.05, 0.7, 2.75]]]);
+const lookB2 = track([[5.55, [0, 0.05, 0.6]], [W(18), [0, 0.03, 0.62]], [6.45, [0.0, 0.35, 0.9]], [7.25, [0.0, 0.5, 1.0]], [W(24), [0.15, 0.35, 1.1]]]);
 function shotB2(t, cam) {
   const S = BE; const tb = W(18);
   const push = seg(t, 5.7, tb, ease.in) * (1 - seg(t, tb, tb + 0.15));
@@ -258,10 +276,10 @@ function shotB2(t, cam) {
     l.position.copy(S.vine.pointAt(u)); l.rotation.set(-0.7 + 0.3 * Math.sin(i * 2), i * 2.4 + 0.5, (i % 2 ? 1 : -1) * 0.9); l.scale.setScalar(0.001 + 0.42 * k * (1 - 0.05 * i)); });
   S.tendrils.forEach((td, i) => td.set(seg(t, tb + 0.4 + i * 0.25, tb + 1.1 + i * 0.25, ease.out)));
   const mk = t < 7.2 ? 0 : ease.outElastic(seg(t, 7.2, W(23) + 0.15, ease.linear));
-  S.melon.position.copy(S.branch.pointAt(1)).add(V(0.02, -0.16 * mk, 0)); S.melon.scale.setScalar(0.001 + 0.36 * mk); S.melon.rotation.set(0.3, t * 0.6, 0.2);
+  S.melon.position.copy(S.branch.pointAt(1)).add(V(0.02, -0.2 * mk, 0)); S.melon.scale.setScalar(0.001 + 0.36 * mk); S.melon.rotation.set(0.3, t * 0.6, 0.2);
   S.sparkles.update(t, S.melon.position, 0.4, seg(t, W(23) - 0.1, W(23) + 0.2) * (1 - seg(t, 7.9, 8.1)));
   const pos = camB2(t).add(shake(t, 0.01 * seg(t, tb, tb + 0.05) * (1 - seg(t, tb + 0.05, tb + 0.3))));
-  aim(cam, pos, lookB2(t), ktrack([[5.55, 34], [tb, 32], [6.45, 46], [8.1, 44]])(t), ktrack([[5.55, 0], [6.45, -0.06], [7.25, 0.05]])(t));
+  aim(cam, pos, lookB2(t), ktrack([[5.55, 42], [tb, 36], [6.45, 46], [8.1, 44]])(t), ktrack([[5.55, 0], [6.45, -0.06], [7.25, 0.05]])(t));
   const focus = t < tb + 0.3 ? cam.position.distanceTo(S.navel) : cam.position.distanceTo(S.vine.pointAt(Math.min(g, 0.7)));
   return { scene: S.scene, fx: { vignette: 0.28 }, exposure: 1.0, dof: { focus, aperture: 0.004, maxblur: 0.01 } };
 }

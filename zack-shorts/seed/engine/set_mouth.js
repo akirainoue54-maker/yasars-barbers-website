@@ -170,7 +170,7 @@ export function buildMouth() {
   const rx = (u) => { const m = smooth(clamp((u - 0.12) / 0.16)); return lerp(0.64, 0.42, m) * (1 - 0.35 * smooth(clamp((u - 0.27) / 0.12))) + 0.0; };
   const ry = (u) => { const m = smooth(clamp((u - 0.12) / 0.16)); return lerp(0.52, 0.4, m) * (1 - 0.35 * smooth(clamp((u - 0.27) / 0.12))); };
   const tunnel = new Tunnel(pts, { rx, ry, mat: tissueMat(0xe06a70, { vertexColors: true }) });
-  g.add(tunnel.mesh);
+  g.add(tunnel.mesh); tunnel.mesh.receiveShadow = false;
   // tongue
   const tg = new THREE.SphereGeometry(1, 96, 64);
   { const p = tg.attributes.position, v = new THREE.Vector3();
@@ -179,7 +179,10 @@ export function buildMouth() {
       p.setXYZ(i, v.x * 0.5, y * 0.2, v.z * 1.0); }
     tg.computeVertexNormals(); }
   const papillae = normalTex(512, 512, (u, v) => Math.pow(Math.abs(noise3(u * 90, v * 90, 4)), 0.6) * 0.7 + fbm(u * 8, v * 8, 1, 3) * 0.3, 4.0, { repeat: true });
-  const tongueMat = new THREE.MeshPhysicalMaterial({ color: 0xd8646e, roughness: 0.5, clearcoat: 1, clearcoatRoughness: 0.1, sheen: 0.8, sheenColor: new THREE.Color(0xffb0b8), normalMap: papillae, normalScale: new THREE.Vector2(0.7, 0.7) });
+  const tongueCol = pixelTex(512, 512, (u, v) => { const d = Math.pow(Math.abs(noise3(u * 90, v * 90, 4)), 0.5); const n = fbm(u * 6, v * 6, 2, 3);
+    return [lerp(196, 236, d) + n * 20, lerp(84, 120, d) + n * 10, lerp(96, 128, d) + n * 10]; }, { repeat: true });
+  tongueCol.repeat.set(5, 9);
+  const tongueMat = new THREE.MeshPhysicalMaterial({ map: tongueCol, color: 0xffffff, roughness: 0.5, clearcoat: 1, clearcoatRoughness: 0.1, sheen: 0.8, sheenColor: new THREE.Color(0xffb0b8), normalMap: papillae, normalScale: new THREE.Vector2(0.7, 0.7) });
   papillae.repeat.set(5, 9); tongueMat.normalScale.set(1.1, 1.1);
   const tongue = new THREE.Mesh(tg, tongueMat); tongue.position.set(0, -0.36, -0.82); tongue.receiveShadow = true; tongue.castShadow = true; g.add(tongue);
   // uvula
@@ -198,8 +201,8 @@ export function buildMouth() {
   const back = kitchenBackdrop(); back.position.set(0, 0.5, 6.5); back.rotation.y = Math.PI; scene.add(back);
   const slice = makeSlice(); slice.scale.setScalar(1.25); scene.add(slice);
   // the swallowed seed (travels by itself) + small flesh bits
-  const seed = makeSeed(0.105); scene.add(seed);
-  const chunk = fleshChunk(5); chunk.scale.setScalar(0.55); scene.add(chunk);
+  const seed = makeSeed(0.105); seed.castShadow = false; scene.add(seed);
+  const chunk = fleshChunk(5); chunk.scale.setScalar(0.55); chunk.castShadow = false; scene.add(chunk);
   // lights
   scene.add(new THREE.HemisphereLight(0xfff2e6, 0x5a1a20, 0.18));
   const outside = new THREE.DirectionalLight(0xfff3e0, 4.0); outside.position.set(1.5, 2.5, 6); outside.target.position.set(0, 0, -1);
