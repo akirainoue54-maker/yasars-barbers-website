@@ -17,6 +17,7 @@ let M, ST, BE, XR, GU, TO, SPLIT, CRUMBS, KSPARK, KGLOW, JUICE; // sets
 export async function setup({ renderer, env }) {
   M = buildMouth(); M.scene.environment = env; M.scene.environmentIntensity = 0.55;
   ST = buildStomach(); ST.scene.environment = env; ST.scene.environmentIntensity = 0.45;
+  ST.seed.material.envMap = env; ST.seed.material.envMapIntensity = 1.0; // own reflections so the black shell reads glossy
   BE = buildBelly(); BE.scene.environment = env; BE.scene.environmentIntensity = 0.5;
   XR = buildXray(); GU = buildGut(); GU.scene.environment = env; GU.scene.environmentIntensity = 0.6;
   TO = buildToilet(); TO.scene.environment = env; TO.scene.environmentIntensity = 0.8;
@@ -195,7 +196,7 @@ const seedFallC = (t) => {
   const k = seg(t, tDrop, tDrop + 1.4, ease.out);
   return V(0.05 + 0.05 * Math.sin(t * 1.3), lerp(ACID_Y - 0.05, -1.78, k) + 0.02 * Math.sin(t * 2.2), 0.1);
 };
-const camC = track([[8.78, [0.5, 1.2, 1.25]], [9.55, [0.6, 0.05, 1.1]], [10.1, [0.55, -1.45, 0.85]], [11.4, [0.6, -1.62, 0.55]], [12.4, [-0.55, -1.7, 0.45]], [13.35, [-0.45, -1.66, 0.62]], [14.6, [-0.32, -1.66, 0.55]], [15.62, [0.0, -1.7, 0.42]]]);
+const camC = track([[8.78, [0.5, 1.2, 1.25]], [9.55, [0.6, 0.05, 1.1]], [10.1, [0.55, -1.45, 0.85]], [11.4, [0.6, -1.62, 0.55]], [12.4, [-0.55, -1.7, 0.45]], [13.35, [-0.45, -1.66, 0.62]], [14.6, [-0.38, -1.64, 0.62]], [15.62, [-0.1, -1.66, 0.6]]]);
 function underwater(S, cam) {
   const uw = cam.position.y < ACID_Y + waveH(cam.position);
   S.scene.fog = uw ? new THREE.FogExp2(0x9fbf12, 0.3) : null;
@@ -204,7 +205,7 @@ function underwater(S, cam) {
 }
 const waveH = () => 0;
 function shotC(t, cam) {
-  const S = ST;
+  const S = ST; S.seed.material.envMapIntensity = 1.0;
   S.plant.visible = false; S.acid.visible = true; S.bubbles.mesh.visible = true; S.splash.mesh.visible = true; S.ripple.visible = true; S.seed.visible = true;
   squeezeCavity(S, t, 0);
   const tDrop = W(30) + 0.02;
@@ -213,12 +214,12 @@ function shotC(t, cam) {
   waveAcid(S, t, 0.025, { x: sp.x, z: sp.z, t: t - tDrop, a: 0.06 });
   S.splash.update(t - tDrop, V(sp.x, ACID_Y, sp.z), { speed: 1.4, gravity: 5 });
   S.ripple.position.set(sp.x, ACID_Y + 0.01, sp.z); { const k = inv(tDrop, tDrop + 0.9, t); S.ripple.scale.setScalar(0.05 + k * 1.2); S.ripple.material.opacity = t > tDrop ? 0.6 * (1 - k) : 0; }
-  S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1);
+  S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1, camC(t));
   // sprout attempt + wilt
   const sprOn = seg(t, W(48) - 0.05, W(48) + 0.4, ease.out), wilt = seg(t, W(50), W(50) + 0.5, ease.inOut);
   S.sprout.visible = sprOn > 0.001;
   S.seed.updateMatrixWorld(); S.sprout.position.copy(S.seed.localToWorld(V(0, 0.48, 0))); S.sprout.quaternion.copy(S.seed.quaternion);
-  { const fwd = V(0, 0, -1).applyQuaternion(cam.quaternion); S.sprout.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, wilt * 1.5)); }
+  { const fwd = V(0, 0, -1).applyQuaternion(cam.quaternion); S.sprout.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, wilt * 1.05)); }
   S.sproutStem.set(sprOn);
   S.sproutStem.mesh.material.color.setRGB(lerp(0.49, 0.45, wilt), lerp(0.76, 0.36, wilt), lerp(0.27, 0.12, wilt));
   S.sproutCots.forEach((c, i) => { const tip = S.sproutStem.pointAt(Math.max(0.01, sprOn)); c.position.copy(tip); c.scale.setScalar(0.001 + 0.3 * ease.outBack(seg(t, W(48) + 0.2, W(48) + 0.45, ease.linear)));
@@ -241,12 +242,12 @@ function shotC(t, cam) {
 }
 
 // ---------------- SHOT D1/D2: tough shell -> stomach squeezes ----------------
-const camD = track([[W(51), [0.0, -1.64, 0.66]], [16.3, [0.42, -1.68, 0.38]], [17.0, [0.45, -1.62, 0.5]], [17.9, [0.3, -1.58, 0.62]], [18.35, [0.45, -1.6, 0.05]], [18.7, [0.3, -1.62, -1.3]]]);
+const camD = track([[W(51), [-0.1, -1.66, 0.6]], [16.3, [0.42, -1.68, 0.38]], [17.0, [0.45, -1.62, 0.5]], [17.9, [0.3, -1.58, 0.62]], [18.35, [0.45, -1.6, 0.05]], [18.7, [0.3, -1.62, -1.3]]]);
 // orient a seed so its flat face looks at the camera (tip up-right), blended by k
-function faceSeed(seed, cam, k, t) {
+function faceSeed(seed, cam, k, t, yaw = 0.25) {
   if (k <= 0) return;
   const q0 = seed.quaternion.clone();
-  seed.lookAt(cam.position); seed.rotateZ(-0.55 + 0.08 * Math.sin(t * 1.3)); seed.rotateX(0.45 + 0.06 * Math.sin(t * 0.9)); seed.rotateY(0.25);
+  seed.lookAt(cam.position); seed.rotateZ(-0.55 + 0.08 * Math.sin(t * 1.3)); seed.rotateX(0.45 + 0.06 * Math.sin(t * 0.9)); seed.rotateY(yaw);
   const q1 = seed.quaternion.clone(); seed.quaternion.copy(q0).slerp(q1, smooth(clamp(k)));
 }
 function shotD12(t, cam) {
@@ -256,13 +257,17 @@ function shotD12(t, cam) {
   squeezeCavity(S, t, squeeze);
   const tumble = seg(t, 17.0, 18.7, ease.in);
   const sp = V(0.05 + 0.25 * tumble * Math.sin(t * 2), -1.78 + 0.15 * tumble + 0.02 * Math.sin(t * 2.2), 0.1 - 0.5 * tumble);
-  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2); faceSeed(S.seed, cam, 1 - 0.35 * seg(t, 17.0, 17.5), t);
+  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2); faceSeed(S.seed, cam, 1 - 0.35 * seg(t, 17.0, 17.5), t, 0.75);
   waveAcid(S, t, 0.025 + 0.09 * squeeze);
-  S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1);
+  S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1, camD(t));
   // shell highlight pulse
   const hl = seg(t, W(53), W(54)) * (1 - seg(t, 17.1, 17.4));
-  S.shellGlow.position.copy(sp); S.shellGlow.scale.setScalar(0.5 + 0.1 * Math.sin(t * 12)); S.shellGlow.material.opacity = 0.55 * hl;
-  S.rim.intensity = 2.5 + 6 * hl; S.rim.position.copy(sp).add(V(-0.3, 0.25, -0.35));
+  const toCam = camD(t).sub(sp).normalize();
+  S.shellGlow.position.copy(sp).addScaledVector(toCam, -0.12); S.shellGlow.scale.setScalar(0.62 + 0.06 * Math.sin(t * 12)); S.shellGlow.material.opacity = 0.6 * hl;
+  // specular "hero" light up-left in front of the seed so the glossy shell shows a highlight streak
+  const rightV = toCam.clone().cross(V(0, 1, 0)).normalize();
+  S.rim.intensity = 5 + 6 * hl; S.rim.position.copy(sp).addScaledVector(toCam, 0.55).addScaledVector(rightV, -0.12).add(V(0, 0.2, 0));
+  S.seed.material.envMapIntensity = 1.0 + 2.0 * (1 - seg(t, 17.0, 17.4));
   S.acidLight.intensity = 10; S.key.intensity = 16;
   const pos = camD(t); const look = t < 18.2 ? sp.clone() : sp.clone().lerp(V(0.15, -1.6, -2.9), seg(t, 18.2, 18.6));
   aim(cam, pos.add(shake(t, 0.015 * squeeze, 23)), look, ktrack([[W(51), 42], [17.0, 46], [17.9, 54], [18.7, 72]])(t), 0.04 * Math.sin(t) + 0.08 * squeeze * Math.sin(t * 5));

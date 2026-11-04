@@ -54,14 +54,15 @@ export class Bubbles {
     this.p = [...Array(n)].map(() => ({ x: r(), z: r(), ph: r(), sp: 0.25 + r() * 0.5, s: size * (0.3 + r() * 1.2), w: r() * 6 }));
   }
   // box: center, half-size x/z, y range [y0,y1]
-  update(t, c, hx, hz, y0, y1, density = 1) {
+  update(t, c, hx, hz, y0, y1, density = 1, camPos = null) {
     for (let i = 0; i < this.n; i++) {
       const b = this.p[i];
       if (i / this.n > density) { dummy.scale.setScalar(0); }
       else {
         const h = (b.ph + t * b.sp / (y1 - y0)) % 1;
         dummy.position.set(c.x + (b.x - 0.5) * 2 * hx + 0.03 * Math.sin(t * 5 + b.w), y0 + h * (y1 - y0), c.z + (b.z - 0.5) * 2 * hz + 0.03 * Math.cos(t * 4 + b.w));
-        dummy.scale.setScalar(b.s * (0.6 + 0.4 * h) * (h > 0.97 ? (1 - h) / 0.03 : 1));
+        let near = 1; if (camPos) { const d = dummy.position.distanceTo(camPos); near = clamp((d - 0.3) / 0.35); }
+        dummy.scale.setScalar(b.s * (0.6 + 0.4 * h) * (h > 0.97 ? (1 - h) / 0.03 : 1) * near);
       }
       dummy.updateMatrix(); this.mesh.setMatrixAt(i, dummy.matrix);
     }
