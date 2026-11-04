@@ -10,7 +10,7 @@
 | だから芽を出すチャンスがない | ✅（理由を差し替えれば正しい） | スイカの種は、32°Cで発芽まで約3日、21°Cで約10日かかる。発芽の最低温度は16°C前後。胃にいるのは数時間なので、発芽する時間がない。[Oregon State Univ. Extension](https://horticulture.oregonstate.edu/oregon-vegetables/watermelon-0)、[J. Amer. Soc. Hort. Sci. 102(2):175 (1977)](https://journals.ashs.org/downloadpdf/view/journals/jashs/102/2/article-p175.pdf) |
 | 硬い殻は消化できず、腸を通る | ✅ | 噛まずに飲んだ種は、ほぼ形のまま出てくる。[Tasting Table](https://www.tastingtable.com/898007/can-eating-watermelon-seeds-make-you-sick)、[Wonderopolis](https://wonderopolis.org/wonder/will-a-watermelon-grow-in-your-belly-if-you-swallow-a-seed) |
 | 数日後、入ったときのまま出てくる（DAY 1 → DAY 3） | ✅ | 健康な人の全消化管通過時間の中央値は約28時間。個人差が大きく、カプセル測定では10〜73時間。[Gut 2023;72:180](https://gut.bmj.com/content/72/1/180) |
-| 噛めば、お皿の上で一番体に良いものの一つ | ✅（誇張だが許容範囲） | 乾燥した種の中身100 gあたり、たんぱく質28.33 g、マグネシウム515 mg、脂質47.4 g、557 kcal（USDA FoodData Central、FDC ID 169407 / SR 12174）。[FoodData Central 169407](https://fdc.nal.usda.gov/food-details/169407/nutrients)（数値は[MyFoodData](https://tools.myfooddata.com/nutrition-facts/169407/wt1/1)でも同じ）。種1粒はとても軽いので、「100 gあたり」の数字であることに注意 |
+| 噛めば、お皿の上で一番体に良いものの一つ | ✅（誇張だが許容範囲） | 乾燥した種の中身100 gあたり、たんぱく質28.33 g、マグネシウム515 mg、亜鉛10.24 mg、脂質47.4 g、557 kcal（USDA FoodData Central、FDC ID 169407 / SR 12174）。亜鉛の値は[BodBot（USDA SR 12174）](https://www.bodbot.com/Nutrition/Foods/12174/seeds-watermelon-seed-kernels-dried)でも同じ。[FoodData Central 169407](https://fdc.nal.usda.gov/food-details/169407/nutrients)（数値は[MyFoodData](https://tools.myfooddata.com/nutrition-facts/169407/wt1/1)でも同じ）。種1粒はとても軽いので、「100 gあたり」の数字であることに注意 |
 
 ## 採用した修正（案B）
 
@@ -25,3 +25,14 @@
 テロップ: 「pH 1.5」と「NEEDS 3+ DAYS」（「O₂: ~0」は使わない）。
 
 なお、暗さは理由にならない。スイカの種は暗い所でも発芽する（1977年の論文では、20°C以下だと光があるほうが発芽しにくい）。
+
+## 動画内のテロップと根拠
+
+| テロップ | 根拠 |
+|---|---|
+| pH 1.5 / STOMACH ACID | 空腹時の胃のpH（中央値1.7、高齢者で1.3）。上の表の胃酸の行 |
+| NEEDS 3+ DAYS / TO SPROUT | スイカの種は32°Cで発芽まで約3日かかる（Oregon State Univ. Extension） |
+| TOUGH SHELL | 噛まずに飲んだ種は、ほぼ形のまま出てくる |
+| DAY 1 → DAY 3 | 全消化管通過時間は10〜73時間（中央値約28時間）。台本の「a few days」に合わせている |
+| 100% INTACT | 殻が消化されないこと（演出上の言い方） |
+| PROTEIN / MAGNESIUM / ZINC | 種の中身100 gあたり、たんぱく質28.3 g、マグネシウム515 mg、亜鉛10.2 mg（USDA） |
