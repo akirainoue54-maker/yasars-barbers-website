@@ -29,6 +29,11 @@ export async function setup({ renderer, env }) {
   { // navel position on the torso surface
     const rc = new THREE.Raycaster(V(0, 0.02, 3), V(0, 0, -1)); const h = rc.intersectObject(BE.torso)[0]; if (h) BE.navel.copy(h.point); }
   END = DATA.words[DATA.words.length - 1].e + 1.15; // narration end + CTA second
+  { // seat the chew seed on top of a right lower molar
+    M.scene.updateMatrixWorld(true); let best = null;
+    M.lower.children.forEach((m) => { if (!m.geometry || m.geometry.type === 'TubeGeometry') return; const b = new THREE.Box3().setFromObject(m); const c = b.getCenter(V(0, 0, 0));
+      if (c.x > 0.2 && (!best || Math.abs(c.x - 0.36) < Math.abs(best.c.x - 0.36))) best = { b, c }; });
+    if (best) molarSeat.set(best.c.x, best.b.max.y + 0.012, best.c.z); }
   SHOTS.push({ t0: 0, t1: 3.3, run: shotA });
   SHOTS.push({ t0: 3.3, t1: 5.55, run: shotB1 });
   SHOTS.push({ t0: 5.55, t1: W(24), run: shotB2 });
@@ -359,13 +364,13 @@ function shotD6(t, cam) {
   const look = t < tHit ? V(sp.x, lerp(sp.y, WATER_Y, 0.6), sp.z) : sp;
   aim(cam, pos, look, ktrack([[t0, 55], [tHit, 46], [W(82), 36], [t1, 34]])(t), 0.03);
   const uw = cam.position.y < WATER_Y;
-  S.scene.fog = uw ? new THREE.FogExp2(0x1f86a8, 0.9) : null; S.scene.background.set(uw ? 0x1f6f90 : 0x9fb0b8);
+  S.scene.fog = uw ? new THREE.FogExp2(0x0f88a8, 0.9) : null; S.scene.background.set(uw ? 0x0d6a88 : 0x9fb0b8);
   const telops = [{ text: '100% INTACT', x: 540, y: 470, t0: W(82), size: 104, pill: '#ffffff', color: '#111' }];
   return { scene: S.scene, fx: { vignette: 0.3, flash: (1 - seg(t, t0, t0 + 0.1)) * 0.6, tint: uw ? 'rgba(10,110,150,0.16)' : null }, exposure: 1.0, telops, dof: { focus: cam.position.distanceTo(sp), aperture: 0.006, maxblur: 0.01 } };
 }
 
 // ---------------- SHOT E: chew it -> it cracks -> nutrients -> loop back to the first frame ----------------
-const molarSeat = V(0.36, -0.13, -0.34);
+const molarSeat = V(0.36, -0.2, -0.2); // replaced in setup by the real top of a lower molar
 function shotE(t, cam) {
   const S = M; const t0 = W(88), tChew = W(96), tPlate = W(105);
   const end = END;
@@ -374,10 +379,10 @@ function shotE(t, cam) {
   // jaw: slowly closing before the crunch, snap at "chewed", reopen
   const pre = seg(t, 28.2, tChew - 0.05, ease.in), snap = seg(t, tChew - 0.06, tChew, ease.in), open = seg(t, tChew + 0.12, tChew + 0.6);
   const close = Math.max(0.55 * pre, snap) * (1 - open);
-  S.lower.position.y = -0.2 + 0.31 * close; S.lower.rotation.x = -0.05 * (1 - close); S.upper.position.y = 0.16 - 0.06 * close;
+  S.lower.position.y = -0.2 + 0.36 * close; S.lower.rotation.x = -0.05 * (1 - close); S.upper.position.y = 0.16 - 0.07 * close;
   // split seed sitting on the molar
   const G = SPLIT.group; G.visible = t < tPlate + 0.2;
-  G.position.copy(molarSeat).add(V(0, 0.0 + 0.31 * close * 0.0, 0)); G.rotation.set(Math.PI / 2 - 0.2, 0.5, 0.15);
+  G.position.copy(molarSeat).add(V(0, 0.36 * Math.min(close, 0.9), 0)); G.rotation.set(Math.PI / 2 - 0.1, 0.5, 0.1);
   const crack = seg(t, tChew, tChew + 0.35, ease.outBack);
   SPLIT.halves[0].position.set(0, 0, 0.18 * crack); SPLIT.halves[0].rotation.set(0.0, 0.7 * crack, 0.15 * crack);
   SPLIT.halves[1].position.set(0, 0, -0.16 * crack); SPLIT.halves[1].rotation.set(0.0, -0.6 * crack, -0.1 * crack);
@@ -388,7 +393,7 @@ function shotE(t, cam) {
   G.updateMatrixWorld(); const kp = SPLIT.kernel.getWorldPosition(V(0, 0, 0));
   KGLOW.position.copy(kp); KGLOW.scale.setScalar(0.35 + 0.05 * Math.sin(t * 8)); KGLOW.material.opacity = 0.7 * glowK;
   KSPARK.group.visible = true; KSPARK.update(t, kp, 0.18, glowK);
-  CRUMBS.mesh.visible = t > tChew && t < tChew + 0.8; CRUMBS.update(t - tChew, molarSeat.clone().add(V(0, 0.03, 0)), { speed: 0.9, gravity: 3 });
+  CRUMBS.mesh.visible = t > tChew && t < tChew + 0.8; CRUMBS.update(t - tChew, G.position.clone().add(V(0, 0.02, 0)), { speed: 0.9, gravity: 3 });
   // slice comes back for the loop
   const loopK = inv(tPlate, end, t);
   S.slice.visible = t > tPlate - 0.3;
@@ -399,8 +404,9 @@ function shotE(t, cam) {
     const far = V(0.9, -0.6, 2.4).multiplyScalar(Math.pow(1 - ease.out(loopK), 2));
     S.slice.position.copy(p0.clone().addScaledVector(v, tau).add(far).sub(local)); }
   // camera: molars -> pull back and turn to face out of the mouth -> exact first-frame pose
-  const mPos = track([[t0, [0.18, 0.02, -0.75]], [28.3, [0.25, -0.02, -0.62]], [tChew, [0.27, -0.03, -0.6]], [W(100), [0.12, 0.05, -0.68]], [tPlate, [0.2, 0.06, -0.72]]])(Math.min(t, tPlate));
-  const mLook = track([[t0, [0.36, -0.15, -0.3]], [tChew, [0.36, -0.14, -0.32]], [W(100), [kp.x, kp.y, kp.z]], [tPlate, [kp.x, kp.y, kp.z]]])(Math.min(t, tPlate));
+  const ms = molarSeat;
+  const mPos = track([[t0, [ms.x - 0.3, ms.y + 0.22, ms.z - 0.5]], [28.3, [ms.x - 0.32, ms.y + 0.2, ms.z - 0.4]], [tChew, [ms.x - 0.34, ms.y + 0.2, ms.z - 0.36]], [W(100), [ms.x - 0.3, ms.y + 0.26, ms.z - 0.42]], [tPlate, [ms.x - 0.28, ms.y + 0.26, ms.z - 0.5]]])(Math.min(t, tPlate));
+  const mLook = track([[t0, [ms.x, ms.y + 0.05, ms.z]], [tChew, [ms.x, ms.y + 0.2, ms.z]], [W(100), [kp.x, kp.y, kp.z]], [tPlate, [kp.x, kp.y, kp.z]]])(Math.min(t, tPlate));
   const tFace = Math.min(end - 0.45, tPlate + 0.75);
   const k = seg(t, tPlate, tFace, ease.inOut);
   const pos = mPos.clone().lerp(camPosA(0), k), look = mLook.clone().lerp(camLookA(0), k);
