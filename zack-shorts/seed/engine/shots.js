@@ -236,7 +236,7 @@ function shotC(t, cam) {
 }
 
 // ---------------- SHOT D1/D2: tough shell -> stomach squeezes ----------------
-const camD = track([[W(51), [0.0, -1.64, 0.66]], [16.3, [0.42, -1.68, 0.38]], [17.0, [0.25, -1.66, -0.3]], [17.9, [1.2, -0.6, 1.8]], [18.7, [0.4, -0.9, -1.6]]]);
+const camD = track([[W(51), [0.0, -1.64, 0.66]], [16.3, [0.42, -1.68, 0.38]], [17.0, [0.45, -1.62, 0.5]], [17.9, [0.3, -1.58, 0.62]], [18.35, [0.45, -1.6, 0.05]], [18.7, [0.3, -1.62, -1.3]]]);
 // orient a seed so its flat face looks at the camera (tip up-right), blended by k
 function faceSeed(seed, cam, k, t) {
   if (k <= 0) return;
@@ -250,8 +250,8 @@ function shotD12(t, cam) {
   const squeeze = seg(t, 17.0, 17.6) * (0.6 + 0.4 * Math.sin((t - 17) * 5) ** 2);
   squeezeCavity(S, t, squeeze);
   const tumble = seg(t, 17.0, 18.7, ease.in);
-  const sp = V(0.05 + 0.6 * tumble * Math.sin(t * 2), -1.78 + 0.3 * tumble + 0.02 * Math.sin(t * 2.2), 0.1 - 1.6 * tumble);
-  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2); faceSeed(S.seed, cam, 1 - seg(t, 17.0, 17.5), t);
+  const sp = V(0.05 + 0.25 * tumble * Math.sin(t * 2), -1.78 + 0.15 * tumble + 0.02 * Math.sin(t * 2.2), 0.1 - 0.5 * tumble);
+  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2); faceSeed(S.seed, cam, 1 - 0.35 * seg(t, 17.0, 17.5), t);
   waveAcid(S, t, 0.025 + 0.09 * squeeze);
   S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1);
   // shell highlight pulse
@@ -259,8 +259,8 @@ function shotD12(t, cam) {
   S.shellGlow.position.copy(sp); S.shellGlow.scale.setScalar(0.5 + 0.1 * Math.sin(t * 12)); S.shellGlow.material.opacity = 0.55 * hl;
   S.rim.intensity = 2.5 + 6 * hl; S.rim.position.copy(sp).add(V(-0.3, 0.25, -0.35));
   S.acidLight.intensity = 10; S.key.intensity = 16;
-  const pos = camD(t); const look = t < 17.9 ? sp.clone() : V(0.2, -1.1, -2.6);
-  aim(cam, pos, look, ktrack([[W(51), 42], [17.0, 44], [17.9, 62], [18.7, 70]])(t), 0.04 * Math.sin(t));
+  const pos = camD(t); const look = t < 18.2 ? sp.clone() : sp.clone().lerp(V(0.15, -1.6, -2.9), seg(t, 18.2, 18.6));
+  aim(cam, pos.add(shake(t, 0.015 * squeeze, 23)), look, ktrack([[W(51), 42], [17.0, 46], [17.9, 54], [18.7, 72]])(t), 0.04 * Math.sin(t) + 0.08 * squeeze * Math.sin(t * 5));
   underwater(S, cam);
   S.camLight.position.copy(pos).add(V(0, 0.25, 0));
   const telops = [{ text: 'TOUGH SHELL', x: 540, y: 470, t0: W(53), t1: W(55), size: 104, pill: '#f2f2f2', color: '#111' }];
@@ -335,7 +335,7 @@ function shotD45(t, cam) {
   const telops = [];
   if (t >= tDays) {
     const d = 1 + Math.min(2, Math.floor(3 * inv(tDays + 0.15, t1 - 0.3, t)));
-    telops.push({ text: `DAY 1 → DAY ${d}`, x: 540, y: 460, t0: tDays, size: 118, color: '#ffe03a', sub: d === 3 ? 'STILL IN ONE PIECE' : '' });
+    telops.push({ text: d === 1 ? 'DAY 1 →' : `DAY 1 → DAY ${d}`, x: 540, y: 460, t0: tDays, size: 118, color: '#ffe03a', sub: d === 3 ? 'STILL IN ONE PIECE' : '' });
   }
   return { scene: S.scene, fx: { vignette: 0.25, flash: (1 - seg(t, t0, t0 + 0.1)) * 0.6 }, exposure: 1.0, telops, dof: { focus: cam.position.distanceTo(sp), aperture: 0.004, maxblur: 0.008 } };
 }

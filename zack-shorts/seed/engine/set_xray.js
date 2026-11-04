@@ -96,29 +96,27 @@ export function buildGut() {
   for (let i = 0; i < 46; i++) { dir.add(V((r() - 0.5) * 1.3, (r() - 0.5) * 1.3, (r() - 0.5) * 0.9)).normalize(); p = p.clone().addScaledVector(dir, 0.9 + r() * 0.8); pts.push(p); }
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
   const R = 0.42;
-  const wall = new THREE.Mesh(varTube(curve, 1600, 40, (u) => R * (1 + 0.08 * Math.sin(u * 700) + 0.04 * Math.sin(u * 131))),
+  // irregular (noise) radius: soft bulges and pinches, never a regular ring pattern
+  const wall = new THREE.Mesh(varTube(curve, 1600, 48, (u) => (th) => R * (1 + 0.16 * fbm(u * 9, 0.5, 1.7, 3) + 0.05 * fbm(u * 40, Math.cos(th) * 0.8, Math.sin(th) * 0.8, 2))),
     xrayMat(0xffb08a, { alpha: 0.14, rimAlpha: 0.8, rim: 0xfff3e0, power: 1.7 }));
   scene.add(wall);
   // inner folds (circular rings) for texture
-  const foldM = xrayMat(0xffc8a8, { alpha: 0.0, rimAlpha: 0.5, rim: 0xffffff, power: 1.2 });
-  const fg = []; const o = new THREE.Object3D();
-  for (let i = 0; i < 520; i++) { const u = i / 520; const c = curve.getPointAt(u), t = curve.getTangentAt(u);
-    const tg = new THREE.TorusGeometry(R * 0.93, 0.012, 6, 40); o.position.copy(c); o.lookAt(c.clone().add(t)); o.updateMatrix(); tg.applyMatrix4(o.matrix); fg.push(tg); }
-  scene.add(new THREE.Mesh(mergeGeometries(fg), foldM));
+  // second, inner translucent layer for depth (no rings)
+  scene.add(new THREE.Mesh(varTube(curve, 1600, 40, (u) => R * 0.9 * (1 + 0.16 * fbm(u * 9, 0.5, 1.7, 3))), xrayMat(0xff9a7a, { alpha: 0.05, rimAlpha: 0.35, rim: 0xffd8c0, power: 2.5 })));
   // food bits
   const foodCols = [0xe8c48a, 0x8cc850, 0xf09a40, 0xd9a070, 0xf0e0b0, 0xc86a50];
   const food = []; const fr = rng(9);
   for (let i = 0; i < 150; i++) {
-    const g = new THREE.IcosahedronGeometry(0.09 + fr() * 0.09, 2); const pp = g.attributes.position; const v = new THREE.Vector3();
-    for (let k = 0; k < pp.count; k++) { v.fromBufferAttribute(pp, k); v.multiplyScalar(1 + 0.35 * fbm(v.x * 8 + i, v.y * 8, v.z * 8, 2)); pp.setXYZ(k, v.x, v.y, v.z); } g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: foodCols[i % foodCols.length], roughness: 0.5, clearcoat: 0.6, transparent: true, opacity: 0.78, sheen: 0.5 }));
+    const g = new THREE.IcosahedronGeometry(0.08 + fr() * 0.08, 5); const pp = g.attributes.position; const v = new THREE.Vector3();
+    for (let k = 0; k < pp.count; k++) { v.fromBufferAttribute(pp, k); v.multiplyScalar(1 + 0.3 * fbm(v.x * 5 + i, v.y * 5, v.z * 5, 2)); pp.setXYZ(k, v.x, v.y, v.z); } g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: foodCols[i % foodCols.length], roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.15, transparent: true, opacity: 0.82, sheen: 0.8, sheenColor: new THREE.Color(0xffffff) }));
     food.push({ m, u0: fr() * 0.9, ox: (fr() - 0.5) * 0.45, oy: (fr() - 0.5) * 0.45, spin: fr() * 3 }); scene.add(m);
   }
   const seed = makeSeed(0.16); scene.add(seed);
   const halo = glow('#fff3a0', 0.6); halo.material.opacity = 0.5; scene.add(halo);
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.235, 64), new THREE.MeshBasicMaterial({ color: 0xffe03a, transparent: true, depthTest: false, side: THREE.DoubleSide }));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.218, 64), new THREE.MeshBasicMaterial({ color: 0xffe03a, transparent: true, depthTest: false, side: THREE.DoubleSide }));
   ring.renderOrder = 10; scene.add(ring);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x88aacc, 1.6));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x88aacc, 0.9));
   const key = new THREE.DirectionalLight(0xffffff, 2.5); key.position.set(2, 3, 4); scene.add(key);
   const camLight = new THREE.PointLight(0xffffff, 4, 5, 1.6); scene.add(camLight);
   return { scene, curve, R, food, seed, halo, ring, camLight };
