@@ -96,7 +96,7 @@ export function buildStomach() {
   const sparkles = new Sparkles(28, '#ffd36a', { size: 0.05, seed: 6, star: true }); scene.add(sparkles.group);
 
   // ----- tiny sprout (acid scene) -----
-  const sprout = new THREE.Group(); sprout.scale.setScalar(0.32); scene.add(sprout);
+  const sprout = new THREE.Group(); sprout.scale.setScalar(0.2); scene.add(sprout);
   const sproutStem = new GrowTube([V(0, 0, 0), V(0.02, 0.12, 0), V(0.0, 0.25, 0.02), V(-0.03, 0.36, 0.0)], 0.018, stemMat.clone(), { segs: 60, radial: 8, taper: 0.6 });
   sprout.add(sproutStem.mesh);
   const sproutCots = [makeCotyledon(), makeCotyledon()]; sproutCots.forEach((c) => { c.material = c.material.clone(); c.scale.setScalar(0.001); sprout.add(c); });

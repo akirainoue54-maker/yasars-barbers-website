@@ -204,7 +204,7 @@ function shotC(t, cam) {
   squeezeCavity(S, t, 0);
   const tDrop = W(30) + 0.02;
   const sp = seedFallC(t); S.seed.position.copy(sp);
-  { const settle = seg(t, 12.6, 13.6); S.seed.rotation.set(lerp(0.4 + t * 0.5, 0.35, settle), lerp(t * 0.7, 0.6, settle), lerp(0.2 + 0.3 * Math.sin(t), -0.25, settle)); }
+  { const settle = seg(t, 11.9, 12.9); S.seed.rotation.set(0.4 + t * 0.5, t * 0.7, 0.2 + 0.3 * Math.sin(t)); faceSeed(S.seed, cam, settle, t); }
   waveAcid(S, t, 0.025, { x: sp.x, z: sp.z, t: t - tDrop, a: 0.06 });
   S.splash.update(t - tDrop, V(sp.x, ACID_Y, sp.z), { speed: 1.4, gravity: 5 });
   S.ripple.position.set(sp.x, ACID_Y + 0.01, sp.z); { const k = inv(tDrop, tDrop + 0.9, t); S.ripple.scale.setScalar(0.05 + k * 1.2); S.ripple.material.opacity = t > tDrop ? 0.6 * (1 - k) : 0; }
@@ -212,8 +212,8 @@ function shotC(t, cam) {
   // sprout attempt + wilt
   const sprOn = seg(t, W(48) - 0.05, W(48) + 0.4, ease.out), wilt = seg(t, W(50), W(50) + 0.5, ease.inOut);
   S.sprout.visible = sprOn > 0.001;
-  S.seed.updateMatrixWorld(); S.sprout.position.copy(S.seed.localToWorld(V(0, 0.5, 0))); S.sprout.quaternion.copy(S.seed.quaternion);
-  { const right = V(1, 0, 0).applyQuaternion(cam.quaternion); S.sprout.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(right, -wilt * 1.5)); }
+  S.seed.updateMatrixWorld(); S.sprout.position.copy(S.seed.localToWorld(V(0, 0.48, 0))); S.sprout.quaternion.copy(S.seed.quaternion);
+  { const fwd = V(0, 0, -1).applyQuaternion(cam.quaternion); S.sprout.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, wilt * 1.5)); }
   S.sproutStem.set(sprOn);
   S.sproutStem.mesh.material.color.setRGB(lerp(0.49, 0.45, wilt), lerp(0.76, 0.36, wilt), lerp(0.27, 0.12, wilt));
   S.sproutCots.forEach((c, i) => { const tip = S.sproutStem.pointAt(Math.max(0.01, sprOn)); c.position.copy(tip); c.scale.setScalar(0.001 + 0.3 * ease.outBack(seg(t, W(48) + 0.2, W(48) + 0.45, ease.linear)));
@@ -228,7 +228,7 @@ function shotC(t, cam) {
   S.camLight.position.copy(pos).add(V(0, 0.25, 0)); S.camLight.intensity = 2.2;
   const telops = [
     { text: 'pH 1.5', x: 540, y: 470, t0: W(35), size: 170, sub: 'STOMACH ACID' },
-    { text: 'NEEDS 3+ DAYS', x: 540, y: 470, t0: W(41), size: 108, sub: 'TO SPROUT', color: '#ffffff' },
+    { text: 'NEEDS 3+ DAYS', x: 540, y: 470, t0: W(41), size: 112, sub: 'TO SPROUT' },
   ];
   telops[0].t1 = W(41) - 0.05;
   telops[1].t1 = W(48);
@@ -236,7 +236,14 @@ function shotC(t, cam) {
 }
 
 // ---------------- SHOT D1/D2: tough shell -> stomach squeezes ----------------
-const camD = track([[W(51), [0.0, -1.7, 0.42]], [16.3, [0.32, -1.72, 0.05]], [17.0, [0.25, -1.66, -0.3]], [17.9, [1.2, -0.6, 1.8]], [18.7, [0.4, -0.9, -1.6]]]);
+const camD = track([[W(51), [0.0, -1.64, 0.66]], [16.3, [0.42, -1.68, 0.38]], [17.0, [0.25, -1.66, -0.3]], [17.9, [1.2, -0.6, 1.8]], [18.7, [0.4, -0.9, -1.6]]]);
+// orient a seed so its flat face looks at the camera (tip up-right), blended by k
+function faceSeed(seed, cam, k, t) {
+  if (k <= 0) return;
+  const q0 = seed.quaternion.clone();
+  seed.lookAt(cam.position); seed.rotateZ(-0.55 + 0.08 * Math.sin(t * 1.3)); seed.rotateX(0.45 + 0.06 * Math.sin(t * 0.9)); seed.rotateY(0.25);
+  const q1 = seed.quaternion.clone(); seed.quaternion.copy(q0).slerp(q1, smooth(clamp(k)));
+}
 function shotD12(t, cam) {
   const S = ST;
   S.plant.visible = false; S.sprout.visible = false; S.acid.visible = true; S.bubbles.mesh.visible = true; S.splash.mesh.visible = false; S.ripple.visible = false;
@@ -244,7 +251,7 @@ function shotD12(t, cam) {
   squeezeCavity(S, t, squeeze);
   const tumble = seg(t, 17.0, 18.7, ease.in);
   const sp = V(0.05 + 0.6 * tumble * Math.sin(t * 2), -1.78 + 0.3 * tumble + 0.02 * Math.sin(t * 2.2), 0.1 - 1.6 * tumble);
-  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2);
+  S.seed.position.copy(sp); S.seed.rotation.set(0.4 + t * (0.5 + 3 * tumble), t * 0.7, 0.2); faceSeed(S.seed, cam, 1 - seg(t, 17.0, 17.5), t);
   waveAcid(S, t, 0.025 + 0.09 * squeeze);
   S.bubbles.update(t, V(0, 0, 0.1), 1.6, 1.4, -2.3, ACID_Y - 0.02, 1);
   // shell highlight pulse
@@ -253,7 +260,7 @@ function shotD12(t, cam) {
   S.rim.intensity = 2.5 + 6 * hl; S.rim.position.copy(sp).add(V(-0.3, 0.25, -0.35));
   S.acidLight.intensity = 10; S.key.intensity = 16;
   const pos = camD(t); const look = t < 17.9 ? sp.clone() : V(0.2, -1.1, -2.6);
-  aim(cam, pos, look, ktrack([[W(51), 36], [17.0, 40], [17.9, 62], [18.7, 70]])(t), 0.04 * Math.sin(t));
+  aim(cam, pos, look, ktrack([[W(51), 42], [17.0, 44], [17.9, 62], [18.7, 70]])(t), 0.04 * Math.sin(t));
   underwater(S, cam);
   S.camLight.position.copy(pos).add(V(0, 0.25, 0));
   const telops = [{ text: 'TOUGH SHELL', x: 540, y: 470, t0: W(53), t1: W(55), size: 104, pill: '#f2f2f2', color: '#111' }];

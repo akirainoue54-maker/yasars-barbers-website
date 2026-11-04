@@ -81,7 +81,7 @@ export function drawOverlay(ctx, t, r, DATA, glCanvas) {
     } else {
       strokeText(ctx, tp.text, 0, 0, tp.size, tp.color || YELLOW, tp.size * 0.16);
     }
-    if (tp.sub) strokeText(ctx, tp.sub, 0, tp.size * 0.85, tp.size * 0.42, '#fff', tp.size * 0.08);
+    if (tp.sub) strokeText(ctx, tp.sub, 0, tp.size * 0.88, Math.max(48, tp.size * 0.42), '#fff', 10);
     ctx.restore();
   }
 

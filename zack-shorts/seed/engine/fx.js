@@ -9,7 +9,7 @@ export class Droplets {
     this.n = n; this.mesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), mat, n);
     this.mesh.frustumCulled = false;
     const r = rng(seed);
-    this.p = [...Array(n)].map(() => ({ dir: V(r() - 0.5, r() * 0.9 + 0.3, r() - 0.5).normalize(), sp: 0.4 + r() * 1.0, s: size * (0.4 + r()), life: 0.35 + r() * 0.5 }));
+    this.p = [...Array(n)].map(() => { const a = r() * Math.PI * 2, el = 0.35 + r() * 0.9; return { dir: V(Math.cos(a) * Math.cos(el), Math.sin(el) + 0.2, Math.sin(a) * Math.cos(el)).normalize(), sp: 0.5 + r() * 1.1, s: size * (0.4 + r()), life: 0.4 + r() * 0.55 }; });
   }
   // t: time since burst. origin, spreadScale, gravity, up axis
   update(t, origin, { speed = 1, gravity = 4, up = V(0, 1, 0), squash = 1 } = {}) {
