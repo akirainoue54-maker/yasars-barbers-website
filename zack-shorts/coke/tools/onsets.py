@@ -8,6 +8,9 @@ db = 20 * np.log10(np.sqrt((x2 ** 2).mean(1)) + 1e-9)             # 10 ms RMS, 5
 rise = np.array([db[min(k + 3, len(db) - 1)] - db[k] for k in range(len(db))])   # dB gained over 15 ms
 before = np.array([db[max(0, k - 8):k + 1].min() for k in range(len(db))])        # quietest point in the 40 ms before
 PAUSE_FIRST = {24: 7.236, 46: 13.771, 58: 18.196, 78: 24.836, 94: 29.556}   # untrimmed, from ffmpeg silencedetect (-38 dB)
+# Hand-checked fixes (envelope + 3.5-7.5 kHz band inspected): the true onset is earlier than the energy/ASR estimate.
+#  52 "surface": the /s/ hiss starts ~110 ms before the vowel rise; 76 "constantly": /k/ burst after a deep dip; 100 "with": the vowel right after rinse's /s/.
+OVERRIDE = {52: 15.995, 76: 23.360, 100: 31.440}
 cands = []
 for k in range(2, len(db) - 4):
     if rise[k] >= 6.0 and rise[k] == rise[max(0, k - 4):k + 5].max() and db[k + 3] - before[k] >= 8.0:
@@ -16,6 +19,8 @@ cands.sort()
 out = []; prev = -1.0; fb = 0
 for i, w in enumerate(words):
     t0 = w["start"]
+    if i in OVERRIDE:
+        t = OVERRIDE[i]; out.append({"w": w["w"], "asr": round(t0, 3), "onset": round(t, 3), "how": "override", "d_ms": round((t - t0) * 1000)}); prev = t; continue
     if i in PAUSE_FIRST:                                   # first word after a measured pause: the silence end is exact
         t, how = PAUSE_FIRST[i] - 0.012, "pause"; out.append({"w": w["w"], "asr": round(t0, 3), "onset": round(t, 3), "how": how, "d_ms": round((t - t0) * 1000)}); prev = t; continue
     win = [(t, r) for t, r in cands if t0 - 0.13 <= t <= t0 + 0.12 and t > prev + 0.06]

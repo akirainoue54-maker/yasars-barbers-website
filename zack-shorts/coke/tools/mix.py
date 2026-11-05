@@ -77,7 +77,7 @@ ev(W(24) - 0.05, WO + "Combo 2.wav", -8, rev=True, rate=1.6)
 # ---- C0 / C1 / C2
 ev(7.75, WO + "Swish 3.wav", -9); ev(7.8, POP[0], -8); ev(7.82, AB + "ding.wav", -9)
 ev(W(30), WO + "Combo 1.wav", -7); ev(W(30) + 0.02, POP[1], -8)
-ev(W(36), POP[2], -8); ev(W(36) + 0.35, AB + "clack.wav", -9)
+ev(W(30) + 0.12, POP[2], -8); ev(W(33), AB + "clack.wav", -9)   # same moments as the Stomach pH / LOWER pH telops
 ev(9.8, "80-CC0-creature-SFX/burble_01.ogg", -15); ev(10.5, "80-CC0-creature-SFX/burble_02.ogg", -15)
 ev(W(37) - 0.05, WO + "Swish 5.wav", -8); ev(W(37), POP[2], -9)
 for k in range(22): ev(11.55 + k * 0.095, UI + "click1.wav", -18 - 2 * (k % 2), rate=1.0 + 0.04 * (k % 3))
