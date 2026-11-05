@@ -50,7 +50,7 @@ window.renderFrame = (t) => {
   const shot = SHOTS.find((s) => t >= s.t0 && t < s.t1) || SHOTS[SHOTS.length - 1];
   const r = shot.run(t, camera);
   camera.aspect = W / H; camera.updateProjectionMatrix();
-  renderer.toneMappingExposure = (r.exposure ?? 1.0) * gainOf(SHOTS.indexOf(shot), t);
+  const gTot = (r.exposure ?? 1.0) * gainOf(SHOTS.indexOf(shot), t); renderer.toneMappingExposure = Math.max(1, gTot); const postMul = Math.min(1, gTot);
   const draw = (rr) => {
     renderPass.scene = rr.scene; bokeh.scene = rr.scene;
     const d = rr.dof || { focus: 1, aperture: 0, maxblur: 0 };
@@ -63,7 +63,7 @@ window.renderFrame = (t) => {
     const gain = gainOf(SHOTS.indexOf(shot), t);
     r.parts.forEach((p, i) => {
       p.setup(camera); camera.updateProjectionMatrix();
-      renderer.toneMappingExposure = (p.exposure ?? 1) * gain; draw(p);
+      renderer.toneMappingExposure = Math.max(1, (p.exposure ?? 1) * gain); draw(p);
       ctx.drawImage(renderer.domElement, 0, 480, W, 960, 0, i * 960, W, 960);
     });
     ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 12; ctx.fillRect(0, 956, W, 8); ctx.shadowColor = 'transparent';
@@ -72,6 +72,7 @@ window.renderFrame = (t) => {
     for (let i = 0; i < n; i++) { const ts = t + (i / (n - 1) - 0.5) * r.mblur.dt; const rr = shot.run(ts, camera); camera.updateProjectionMatrix(); draw(rr); ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(renderer.domElement, 0, 0); }
     ctx.globalAlpha = 1; shot.run(t, camera);
   } else { draw(r); ctx.drawImage(renderer.domElement, 0, 0); }
+  if (postMul < 0.999) { const v = Math.round(postMul * 255); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; }
   ctx.restore();
   drawOverlay(ctx, t, r, DATA, renderer.domElement);
   return out.toDataURL('image/jpeg', 0.93);

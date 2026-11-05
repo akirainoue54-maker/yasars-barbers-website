@@ -28,13 +28,13 @@ export function glassMat(alpha = 0.05) {
 export function colaMat() {
   return new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { aK: { value: 1.0 }, top: { value: new THREE.Color(0.46, 0.15, 0.025) }, bot: { value: new THREE.Color(0.13, 0.035, 0.008) }, glowK: { value: 1.0 }, y0: { value: BASE }, y1: { value: SURF } },
+    uniforms: { aK: { value: 1.0 }, top: { value: new THREE.Color(0.30, 0.095, 0.014) }, bot: { value: new THREE.Color(0.075, 0.02, 0.004) }, glowK: { value: 1.0 }, y0: { value: BASE }, y1: { value: SURF } },
     vertexShader: `varying vec3 vN; varying vec3 vV; varying float vY;
       void main(){ vY = position.y; vec4 mv = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`,
     fragmentShader: `uniform float aK; uniform vec3 top; uniform vec3 bot; uniform float glowK; varying vec3 vN; varying vec3 vV; varying float vY;
       void main(){ float h = clamp((vY + 1.0)/2.0, 0.0, 1.0);
         float f = pow(1.0-abs(dot(normalize(vN),normalize(vV))), 1.6);
-        vec3 c = mix(bot, top, h*0.85+0.15) + vec3(1.0,0.5,0.12)*f*0.5*glowK;
+        vec3 c = mix(bot, top, h*0.85+0.15) + vec3(1.0,0.5,0.12)*f*0.65*glowK;
         gl_FragColor = vec4(c, clamp(0.72 + 0.2*f, 0.0, 0.94) * aK); }`,
   });
 }
@@ -44,7 +44,7 @@ function backdropTex(night = false) {
   return canvasTex(1024, 1800, (g, w, h) => {
     const bg = g.createRadialGradient(w / 2, h * 0.42, 40, w / 2, h * 0.45, h * 0.8);
     if (night) { bg.addColorStop(0, '#2b4d9a'); bg.addColorStop(0.55, '#14224f'); bg.addColorStop(1, '#070b1c'); }
-    else { bg.addColorStop(0, '#ffc868'); bg.addColorStop(0.45, '#f08a22'); bg.addColorStop(1, '#8a3a06'); }
+    else { bg.addColorStop(0, '#e8892a'); bg.addColorStop(0.28, '#a8520c'); bg.addColorStop(0.6, '#4a2004'); bg.addColorStop(1, '#100602'); }
     g.fillStyle = bg; g.fillRect(0, 0, w, h);
     const r = rng(night ? 5 : 7);
     for (let i = 0; i < (night ? 70 : 26); i++) {
@@ -71,7 +71,7 @@ export function buildCola(env) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0a050);
   // backdrop day + night layers (cross-faded for the "overnight" time-lapse)
-  const dayMat = new THREE.MeshBasicMaterial({ map: backdropTex(false), toneMapped: false, color: 0xffffff });
+  const dayMat = new THREE.MeshBasicMaterial({ map: backdropTex(false), toneMapped: false, color: 0xd0d0d0 });
   const nightMat = new THREE.MeshBasicMaterial({ map: backdropTex(true), toneMapped: false, transparent: true, opacity: 0 });
   const dayPlane = new THREE.Mesh(new THREE.PlaneGeometry(16, 28), dayMat); dayPlane.position.set(0, 3.2, -5.5);
   const nightPlane = new THREE.Mesh(new THREE.PlaneGeometry(16, 28), nightMat); nightPlane.position.set(0, 3.2, -5.45);
@@ -79,7 +79,7 @@ export function buildCola(env) {
   const moon = glow('#e9f1ff', 1.5); moon.position.set(1.2, 4.6, -5.3); moon.material.opacity = 0; scene.add(moon);
   const sun = glow('#fff0b0', 3.2); sun.position.set(-1.2, 1.2, -5.3); scene.add(sun);
   // table
-  const table = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), new THREE.MeshStandardMaterial({ color: 0xd9a272, roughness: 0.5, metalness: 0, envMapIntensity: 0.6 }));
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.5, metalness: 0, envMapIntensity: 0.5 }));
   table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
   // clock on the wall (behind and above the glass)
   const clock = new THREE.Group(); clock.position.set(0, 4.55, -2.2); scene.add(clock);
@@ -133,7 +133,7 @@ export function buildCola(env) {
   const rimL = new THREE.PointLight(0xffb060, 18, 14, 1.4); rimL.position.set(0.3, 2.3, -3.2); scene.add(rimL);
   const fill = new THREE.PointLight(0xffe0c0, 3, 9, 1.6); fill.position.set(2.5, 2, 3.5); scene.add(fill);
 
-  const fog = new THREE.FogExp2(0xb05212, 1.05);
+  const fog = new THREE.FogExp2(0x7a3208, 1.05);
   const pop = new Sparkles(22, '#ffe2a0', { seed: 77, size: 0.14, star: true }); scene.add(pop.group);
   const S = { pop, fog, scene, glass, outer, inner, liquid, surf, foam, foamData, foamBase, fizz, splash, foamSpray, tooth, toothBubbles, tbData, key, rimL, fill, clock, hourPivot, minPivot, dayMat, nightMat, moon, sun, table, dayPlane, nightPlane, dm };
   scene.environment = env; scene.environmentIntensity = 0.35;
@@ -212,6 +212,6 @@ export function setNight(S, night, hours = null) {
   S.rimL.color.setRGB(lerp(1.0, 0.45, night), lerp(0.69, 0.62, night), lerp(0.38, 1.0, night)); S.rimL.intensity = lerp(18, 14, night);
   S.key.intensity = lerp(1.7, 0.9, night); S.key.color.setRGB(lerp(1, 0.7, night), lerp(0.94, 0.8, night), lerp(0.88, 1, night));
   S.liquid.material.uniforms.glowK.value = lerp(1.0, 0.6, night);
-  S.dayMat.color.setScalar(lerp(1, 0.9, night));
+  S.dayMat.color.setScalar(lerp(0.82, 0.74, night));
   if (hours !== null) { S.minPivot.rotation.z = -hours * Math.PI * 2; S.hourPivot.rotation.z = -hours / 12 * Math.PI * 2; }
 }

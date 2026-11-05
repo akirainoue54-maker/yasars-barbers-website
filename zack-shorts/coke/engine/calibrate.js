@@ -24,7 +24,7 @@ const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') r
       for (const t of ts) {
         const y = await page.evaluate((t) => { window.renderFrame(t); const c = document.querySelector('canvas'); const g = c.getContext('2d');
           const d = g.getImageData(0, 0, c.width, c.height).data; let s = 0; for (let k = 0; k < d.length; k += 16) s += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; return s / (d.length / 16); }, t);
-        const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(TARGET / y, 1.7)));
+        const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(TARGET / y, 1.0)));
         seg.push([+t.toFixed(3), +g1.toFixed(4)]); line.push(y.toFixed(0));
       }
       // smooth inside a segment only (never across a cut), then make the cut a step

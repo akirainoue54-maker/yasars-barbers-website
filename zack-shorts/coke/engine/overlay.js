@@ -60,8 +60,9 @@ export function drawOverlay(ctx, t, r, DATA, glCanvas) {
     ctx.restore();
   }
   // ---- grade: soft vignette ----
-  const vg = ctx.createRadialGradient(W / 2, H * 0.47, H * 0.32, W / 2, H * 0.5, H * 0.72);
-  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(20,0,0,${fx.vignette ?? 0.32})`);
+  const vs = Math.min(0.85, (fx.vignette ?? 0.32) * 2.2);
+  const vg = ctx.createRadialGradient(W / 2, H * 0.47, H * 0.2, W / 2, H * 0.5, H * 0.66);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(14,4,0,${vs})`);
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   if (fx.flash > 0 && !window.__NOFLASH) { ctx.fillStyle = `rgba(255,250,240,${clamp(fx.flash)})`; ctx.fillRect(0, 0, W, H); }
   if (fx.tint) { ctx.fillStyle = fx.tint; ctx.fillRect(0, 0, W, H); }
