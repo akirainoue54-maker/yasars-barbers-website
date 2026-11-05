@@ -1,7 +1,9 @@
 // Per-frame auto exposure: sample every ~0.35 s inside each shot, measure mean luma (BT.709) of the finished frame,
 // and store a gain curve [t, gain] per shot in gains.js (linear interpolation in main.js). Run 3-4 passes to converge.
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const TARGET = parseFloat(process.argv[2] || 90);
+const TARGET_BASE = parseFloat(process.argv[2] || 88), TARGET_HOOK = 95;
+// the hook seconds (first and last ~1 s, which are the same frame for the loop) sit at the top of the 85-95 band so the white tooth and foam stay bright
+let END_T = 33.2; const targetAt = (t) => (t < 1.0 ? TARGET_HOOK : t < 2.0 ? TARGET_HOOK + (TARGET_BASE - TARGET_HOOK) * (t - 1.0) : t > END_T - 1.2 ? TARGET_HOOK : TARGET_BASE);
 const parse = () => JSON.parse(fs.readFileSync(path.resolve(__dirname, 'gains.js'), 'utf8').replace(/^export const GAINS = /, '').replace(/;\s*$/, ''));
 const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') return g; if (t <= g[0][0]) return g[0][1];
   for (let i = 1; i < g.length; i++) if (t <= g[i][0]) { const k = (t - g[i - 1][0]) / (g[i][0] - g[i - 1][0]); return g[i - 1][1] * (1 - k) + g[i][1] * k; } return g[g.length - 1][1]; };
@@ -12,7 +14,7 @@ const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') r
   await page.goto('file://' + path.resolve(__dirname, 'scene.html'));
   await page.waitForFunction(() => window.ready === true, null, { timeout: 600000 });
   await page.evaluate(() => { window.__NOFLASH = true; });
-  const spans = await page.evaluate(() => window.SHOTSPAN); const END = await page.evaluate(() => window.END);
+  const spans = await page.evaluate(() => window.SHOTSPAN); const END = await page.evaluate(() => window.END); END_T = END;
   const cur = parse(); const out = {};
   for (let i = 0; i < spans.length; i++) {
     const [a, b, cuts] = spans[i]; const bounds = [a, ...cuts, b]; let curve = []; let line = [];
@@ -24,7 +26,7 @@ const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') r
       for (const t of ts) {
         const y = await page.evaluate((t) => { window.renderFrame(t); const c = document.querySelector('canvas'); const g = c.getContext('2d');
           const d = g.getImageData(0, 0, c.width, c.height).data; let s = 0; for (let k = 0; k < d.length; k += 16) s += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; return s / (d.length / 16); }, t);
-        const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(TARGET / y, 1.0)));
+        const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(targetAt(t) / y, 1.0)));
         seg.push([+t.toFixed(3), +g1.toFixed(4)]); line.push(y.toFixed(0));
       }
       // smooth inside a segment only (never across a cut), then make the cut a step

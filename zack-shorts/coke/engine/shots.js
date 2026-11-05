@@ -37,7 +37,7 @@ const bump = (t, a, b, c, d) => seg(t, a, b, ease.inOut) * (1 - seg(t, c, d, eas
 
 // ---------------- SHOT A (0 - 3.4): one continuous take - foam macro -> orbit -> dive -> bubbles -> tooth settles ----------------
 const camA = track([
-  [0.0, [0.1, SURF - 0.04, 1.75]],    // 1. side macro through the glass: foam band, dark cola below, tooth touching
+  [0.0, [0.1, SURF - 0.06, 1.4]],     // 1. side macro through the glass: foam band, dark cola below, tooth touching
   [0.6, [-0.75, SURF - 0.1, 1.35]],   // 2. orbit left as the splash settles
   [1.05, [-0.55, SURF - 0.14, 0.7]],  // 3. under the surface
   [1.6, [-0.4, SURF - 0.75, 0.74]],   // 4. dive after the sinking tooth

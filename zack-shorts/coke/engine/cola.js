@@ -44,7 +44,7 @@ function backdropTex(night = false) {
   return canvasTex(1024, 1800, (g, w, h) => {
     const bg = g.createRadialGradient(w / 2, h * 0.42, 40, w / 2, h * 0.45, h * 0.8);
     if (night) { bg.addColorStop(0, '#2b4d9a'); bg.addColorStop(0.55, '#14224f'); bg.addColorStop(1, '#070b1c'); }
-    else { bg.addColorStop(0, '#e8892a'); bg.addColorStop(0.28, '#a8520c'); bg.addColorStop(0.6, '#4a2004'); bg.addColorStop(1, '#100602'); }
+    else { bg.addColorStop(0, '#9a521a'); bg.addColorStop(0.3, '#5e2c0a'); bg.addColorStop(0.62, '#2a1204'); bg.addColorStop(1, '#080301'); }
     g.fillStyle = bg; g.fillRect(0, 0, w, h);
     const r = rng(night ? 5 : 7);
     for (let i = 0; i < (night ? 70 : 26); i++) {
@@ -71,7 +71,7 @@ export function buildCola(env) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0a050);
   // backdrop day + night layers (cross-faded for the "overnight" time-lapse)
-  const dayMat = new THREE.MeshBasicMaterial({ map: backdropTex(false), toneMapped: false, color: 0xd0d0d0 });
+  const dayMat = new THREE.MeshBasicMaterial({ map: backdropTex(false), toneMapped: false, color: 0xc0c0c0 });
   const nightMat = new THREE.MeshBasicMaterial({ map: backdropTex(true), toneMapped: false, transparent: true, opacity: 0 });
   const dayPlane = new THREE.Mesh(new THREE.PlaneGeometry(16, 28), dayMat); dayPlane.position.set(0, 3.2, -5.5);
   const nightPlane = new THREE.Mesh(new THREE.PlaneGeometry(16, 28), nightMat); nightPlane.position.set(0, 3.2, -5.45);
@@ -107,10 +107,10 @@ export function buildCola(env) {
 
   // foam: beige base + many fresnel bubbles
   const foamBase = new THREE.Mesh(new THREE.CircleGeometry(R_TOP - 0.07, 72), new THREE.MeshStandardMaterial({ color: 0xf0d6ae, roughness: 0.85, transparent: true, opacity: 0.88, side: THREE.FrontSide }));
-  foamBase.rotation.x = -Math.PI / 2; foamBase.position.y = SURF + 0.012; foamBase.renderOrder = 3; glass.add(foamBase);
-  const NF = 900; const fr = rng(91);
+  foamBase.rotation.x = -Math.PI / 2; foamBase.position.y = SURF + 0.012; foamBase.renderOrder = 3; foamBase.material.color.set(0xb89868); foamBase.material.opacity = 0.7; glass.add(foamBase);
+  const NF = 1500; const fr = rng(91);
   const foam = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), bubbleMaterial(0xfff1d8), NF); foam.frustumCulled = false; foam.renderOrder = 4; glass.add(foam);
-  const foamData = [...Array(NF)].map(() => { const a = fr() * Math.PI * 2, d = Math.sqrt(fr()) * (R_TOP - 0.1); return { x: Math.cos(a) * d, z: Math.sin(a) * d, s: 0.02 + Math.pow(fr(), 2) * 0.05, y: SURF + 0.02 + fr() * 0.07, ph: fr() * 6 }; });
+  const foamData = [...Array(NF)].map(() => { const a = fr() * Math.PI * 2, d = Math.sqrt(fr()) * (R_TOP - 0.1); return { x: Math.cos(a) * d, z: Math.sin(a) * d, s: 0.016 + Math.pow(fr(), 2) * 0.045, y: SURF + 0.015 + fr() * 0.085, ph: fr() * 6 }; });
   const dm = new THREE.Object3D();
 
   // rising fizz
