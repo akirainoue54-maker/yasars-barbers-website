@@ -15,10 +15,9 @@ def refine(t):
     i0 = max(i0, 1); seg = np.diff(db[i0 - 1:i1 + 1])
     k = int(np.argmax(seg)); return (i0 + k) * 0.005
 
-for w in words:
-    # Parakeet onsets run ~40-80 ms early; trust the energy snap only when it moves later
-    r = refine(w["start"])
-    w["s"] = round((r if r >= w["start"] else w["start"] + 0.04) - OFF, 3)
+onsets = json.load(open("build/onsets.json"))          # audio-derived word onsets (tools/onsets.py)
+for w, o in zip(words, onsets):
+    w["s"] = round(o["onset"] - OFF, 3)
     w["e"] = round(w["end"] - OFF, 3)
 # fix word ends before pauses using measured silence starts
 pauses = [(6.781, 7.236), (13.391, 13.771), (17.863, 18.196), (24.491, 24.836), (29.230, 29.556)]

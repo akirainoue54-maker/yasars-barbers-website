@@ -39,7 +39,7 @@ async function init() {
   // warm-up compile of every shot's scene
   for (const s of SHOTS) { const r = s.run(s.t0 + 0.01, camera); (r.parts || [r]).forEach((p) => renderer.compile(p.scene, camera)); }
   window.END = (await import('./shots.js')).END;
-  window.SHOTSPAN = SHOTS.map((s) => [s.t0, Math.min(s.t1, window.END)]);
+  window.SHOTSPAN = SHOTS.map((s) => [s.t0, Math.min(s.t1, window.END), s.cuts || []]);
   window.ready = true;
 }
 

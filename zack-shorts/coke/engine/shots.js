@@ -19,10 +19,10 @@ export async function setup({ renderer, env }) {
   SHOTS.push({ t0: 7.75, t1: W(30), run: shotC0 });
   SHOTS.push({ t0: W(30), t1: W(37) - 0.05, run: shotC1 });
   SHOTS.push({ t0: W(37) - 0.05, t1: W(46) - 0.07, run: shotC2 });
-  SHOTS.push({ t0: W(46) - 0.07, t1: W(58) - 0.03, run: shotD });
+  SHOTS.push({ t0: W(46) - 0.07, t1: W(58) - 0.03, run: shotD, cuts: [15.2, 16.5] });
   SHOTS.push({ t0: W(58) - 0.03, t1: W(78) - 0.05, run: shotE });
-  SHOTS.push({ t0: W(78) - 0.05, t1: W(94) - 0.05, run: shotF });
-  SHOTS.push({ t0: W(94) - 0.05, t1: W(101) + 0.33, run: shotG });
+  SHOTS.push({ t0: W(78) - 0.05, t1: W(94) - 0.05, run: shotF, cuts: [1, 2, 3, 4].map((k) => W(78) - 0.05 + k * BEAT) });
+  SHOTS.push({ t0: W(94) - 0.05, t1: W(101) + 0.33, run: shotG, cuts: [W(99) - 0.1] });
   SHOTS.push({ t0: W(101) + 0.33, t1: 99, run: shotL });
 }
 

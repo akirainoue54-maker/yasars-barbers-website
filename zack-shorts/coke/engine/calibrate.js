@@ -15,20 +15,26 @@ const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') r
   const spans = await page.evaluate(() => window.SHOTSPAN); const END = await page.evaluate(() => window.END);
   const cur = parse(); const out = {};
   for (let i = 0; i < spans.length; i++) {
-    const [a, b] = spans[i]; const n = Math.max(3, Math.ceil((b - a) / 0.35)); const ts = [];
-    for (let j = 0; j < n; j++) ts.push(a + 0.15 + (b - a - 0.25) * (j / (n - 1)));
-    if (a === 0) ts[0] = 0; if (i === spans.length - 1) ts[n - 1] = END - 1 / 30;
-    const curve = []; let line = [];
-    for (const t of ts) {
-      const y = await page.evaluate((t) => { window.renderFrame(t); const c = document.querySelector('canvas'); const g = c.getContext('2d');
-        const d = g.getImageData(0, 0, c.width, c.height).data; let s = 0; for (let k = 0; k < d.length; k += 16) s += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; return s / (d.length / 16); }, t);
-      const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(TARGET / y, 1.7)));
-      curve.push([+t.toFixed(3), +g1.toFixed(4)]); line.push(y.toFixed(0));
+    const [a, b, cuts] = spans[i]; const bounds = [a, ...cuts, b]; let curve = []; let line = [];
+    for (let sI = 0; sI < bounds.length - 1; sI++) {
+      const s0 = bounds[sI], s1 = bounds[sI + 1]; const n = Math.max(2, Math.ceil((s1 - s0) / 0.35)); const ts = [];
+      for (let j = 0; j < n; j++) ts.push(s0 + 0.12 + (s1 - s0 - 0.2) * (j / (n - 1)));
+      if (a === 0 && sI === 0) ts[0] = 0; if (i === spans.length - 1 && sI === bounds.length - 2) ts[n - 1] = END - 1 / 30;
+      const seg = [];
+      for (const t of ts) {
+        const y = await page.evaluate((t) => { window.renderFrame(t); const c = document.querySelector('canvas'); const g = c.getContext('2d');
+          const d = g.getImageData(0, 0, c.width, c.height).data; let s = 0; for (let k = 0; k < d.length; k += 16) s += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; return s / (d.length / 16); }, t);
+        const g0 = gainOf(cur[i], t); const g1 = Math.min(3, Math.max(0.03, g0 * Math.pow(TARGET / y, 1.7)));
+        seg.push([+t.toFixed(3), +g1.toFixed(4)]); line.push(y.toFixed(0));
+      }
+      // smooth inside a segment only (never across a cut), then make the cut a step
+      const sm = seg.map((p, k) => [p[0], +((seg[Math.max(0, k - 1)][1] + 2 * p[1] + seg[Math.min(seg.length - 1, k + 1)][1]) / 4).toFixed(4)]);
+      sm[0][1] = seg[0][1]; sm[sm.length - 1][1] = seg[seg.length - 1][1];
+      if (sI > 0) { curve.push([+(s0 - 0.0005).toFixed(4), curve[curve.length - 1][1]]); curve.push([+s0.toFixed(4), sm[0][1]]); }
+      curve = curve.concat(sm);
     }
-    // light smoothing so exposure never pumps
-    const sm = curve.map((p, k) => [p[0], +((curve[Math.max(0, k - 1)][1] + 2 * p[1] + curve[Math.min(curve.length - 1, k + 1)][1]) / 4).toFixed(4)]);
-    sm[0][1] = curve[0][1]; sm[sm.length - 1][1] = curve[curve.length - 1][1];
-    out[i] = sm; console.log(`shot ${i} [${a.toFixed(2)}-${b.toFixed(2)}] n=${n} luma ${line.join('/')}`);
+    const sm = curve;
+    out[i] = sm; console.log(`shot ${i} [${a.toFixed(2)}-${b.toFixed(2)}] luma ${line.join('/')}`);
   }
   fs.writeFileSync(path.resolve(__dirname, 'gains.js'), 'export const GAINS = ' + JSON.stringify(out) + ';\n');
   await browser.close();
