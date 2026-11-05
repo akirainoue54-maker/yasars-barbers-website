@@ -117,8 +117,8 @@ function shotC1(t, cam) {
   colaUpdate(S, t, { camPos: posTop, toothT: 3.4 + (t - 7.75) }); GA.update(t);
   const telops = [
     { text: 'Coke pH ~2.5', x: 540, y: 240, t0: W(30) - 0.02, size: 118, color: '#ffe03a' },
-    { text: 'Stomach pH 1.5–3.5', x: 540, y: 1105, t0: W(36), size: 92, color: '#d8ff3a' },
-    { text: 'LOWER pH = STRONGER ACID', x: 540, y: 960, t0: W(36) + 0.35, size: 44, pill: '#ffffff', color: '#111111', noPop: false },
+    { text: 'Stomach pH 1.5–3.5', x: 540, y: 1105, t0: W(30) + 0.12, size: 92, color: '#d8ff3a' },
+    { text: 'LOWER pH = STRONGER ACID', x: 540, y: 960, t0: W(33), size: 44, pill: '#ffffff', color: '#111111', noPop: false },
   ];
   return {
     fx: { vignette: 0.28, flash: (1 - seg(t, W(30), W(30) + 0.1)) * 0.7 }, telops,
@@ -155,7 +155,7 @@ function shotD(t, cam) {
   const wear = day === 1 ? lerp(0.0, 0.14, inv(t0, t3, t)) : day === 3 ? lerp(0.42, 0.62, inv(t3, t7, t)) : lerp(0.84, 1.0, inv(t7, t1, t));
   ST.tooth.userData.setWear(wear); ST.tooth.rotation.set(0.12, -0.5 + 0.02 * Math.sin(t * 0.8), 0);
   const sparkK = day === 1 ? 0.95 : day === 3 ? 0.4 : 0;
-  ST.spark.position.set(-0.26, 0.78, 0.55); ST.spark.scale.setScalar(0.3 + 0.12 * Math.sin(t * 7)); ST.spark.material.opacity = sparkK * (0.75 + 0.25 * Math.sin(t * 7));
+  ST.spark.position.set(-0.3, 0.62, 0.8); ST.spark.scale.setScalar((day === 1 ? 0.75 : 0.5) * (0.9 + 0.1 * Math.sin(t * 7))); ST.spark.material.opacity = sparkK * (0.8 + 0.2 * Math.sin(t * 7));
   const pull = lerp(1.0, 0.95, inv(t0, t1, t));
   aim(cam, V(0, 0.8, 4.5 * pull), V(0, 0.3, 0), 30, 0);
   const tn = day === 1 ? t0 : day === 3 ? t3 : t7;

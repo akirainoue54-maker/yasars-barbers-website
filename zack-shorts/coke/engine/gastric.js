@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { clamp, lerp, smooth, rng, canvasTex, V, varTube, fbm, noise3, ease, seg } from './lib.js';
-import { bubbleMaterial, glow } from './fx.js';
+import { bubbleMaterial, glow, starTex } from './fx.js';
 import { makeTooth } from './tooth.js';
 
 // translucent "x-ray glass" with a fresnel rim
@@ -159,15 +159,16 @@ export function buildMucus(env) {
 // ---------------------------------------------------------------------------------------------
 export function buildStudio(env) {
   const scene = new THREE.Scene();
-  scene.background = canvasTex(512, 900, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h * 0.45, 20, w / 2, h * 0.5, h * 0.75); gr.addColorStop(0, '#7fb0ee'); gr.addColorStop(0.55, '#3f72b8'); gr.addColorStop(1, '#16315e'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+  scene.background = canvasTex(512, 900, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h * 0.45, 20, w / 2, h * 0.5, h * 0.75); gr.addColorStop(0, '#2f5a9e'); gr.addColorStop(0.5, '#142c58'); gr.addColorStop(1, '#040a18'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
   const tooth = makeTooth(); tooth.scale.setScalar(1.15); tooth.position.set(0, 0.2, 0); scene.add(tooth);
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64), new THREE.MeshStandardMaterial({ color: 0x9db8e0, roughness: 0.25, metalness: 0, envMapIntensity: 0.9 })); floor.rotation.x = -Math.PI / 2; floor.position.y = -0.62; floor.receiveShadow = true; scene.add(floor);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64), new THREE.MeshStandardMaterial({ color: 0x20386a, roughness: 0.22, metalness: 0.1, envMapIntensity: 1.0 })); floor.rotation.x = -Math.PI / 2; floor.position.y = -0.62; floor.receiveShadow = true; scene.add(floor);
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.55, 48), new THREE.MeshBasicMaterial({ map: canvasTex(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(20,40,80,0.45)'); gr.addColorStop(1, 'rgba(20,40,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); }), transparent: true, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = -0.615; scene.add(shadow);
-  scene.add(new THREE.HemisphereLight(0xeaf3ff, 0x8aa8d0, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(-2.5, 3.5, 3.5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 1, far: 12 }); key.shadow.bias = -0.0004; scene.add(key);
-  const rim = new THREE.DirectionalLight(0xbfd8ff, 1.2); rim.position.set(3, 2, -3); scene.add(rim);
-  const spark = glow('#ffffff', 0.5); spark.material.opacity = 0; scene.add(spark);
-  scene.environment = env; scene.environmentIntensity = 0.7;
+  scene.add(new THREE.HemisphereLight(0xeaf3ff, 0x4a6aa0, 0.28));
+  const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-2.8, 3.2, 3.0); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 1, far: 12 }); key.shadow.bias = -0.0004; scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbfd8ff, 2.2); rim.position.set(3, 2, -3); scene.add(rim);
+  const frontFill = new THREE.DirectionalLight(0xffffff, 0.35); frontFill.position.set(2.5, 1.2, 4); scene.add(frontFill);
+  const spark = new THREE.Sprite(new THREE.SpriteMaterial({ map: starTex('#ffffff'), blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true })); spark.scale.setScalar(0.5); spark.material.opacity = 0; spark.renderOrder = 20; scene.add(spark);
+  scene.environment = env; scene.environmentIntensity = 0.75;
   return { scene, tooth, spark, key };
 }

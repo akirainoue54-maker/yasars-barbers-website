@@ -15,8 +15,10 @@ const gainOf = (g, t) => { if (g == null) return 1; if (typeof g === 'number') r
   await page.waitForFunction(() => window.ready === true, null, { timeout: 600000 });
   await page.evaluate(() => { window.__NOFLASH = true; });
   const spans = await page.evaluate(() => window.SHOTSPAN); const END = await page.evaluate(() => window.END); END_T = END;
+  const only = process.argv[3] ? process.argv[3].split(',').map(Number) : null;
   const cur = parse(); const out = {};
   for (let i = 0; i < spans.length; i++) {
+    if (only && !only.includes(i)) { out[i] = cur[i]; continue; }
     const [a, b, cuts] = spans[i]; const bounds = [a, ...cuts, b]; let curve = []; let line = [];
     for (let sI = 0; sI < bounds.length - 1; sI++) {
       const s0 = bounds[sI], s1 = bounds[sI + 1]; const n = Math.max(2, Math.ceil((s1 - s0) / 0.35)); const ts = [];
