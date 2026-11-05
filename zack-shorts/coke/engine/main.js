@@ -72,6 +72,11 @@ window.renderFrame = (t) => {
     for (let i = 0; i < n; i++) { const ts = t + (i / (n - 1) - 0.5) * r.mblur.dt; const rr = shot.run(ts, camera); camera.updateProjectionMatrix(); draw(rr); ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(renderer.domElement, 0, 0); }
     ctx.globalAlpha = 1; shot.run(t, camera);
   } else { draw(r); ctx.drawImage(renderer.domElement, 0, 0); }
+  { // look: punchier contrast and colour first (dark areas darker, whites stay white), then the exposure multiply
+    if (!window.__tmp) { window.__tmp = document.createElement('canvas'); window.__tmp.width = W; window.__tmp.height = H; }
+    const tg = window.__tmp.getContext('2d'); tg.globalCompositeOperation = 'copy'; tg.drawImage(ctx.canvas, 0, 0); tg.globalCompositeOperation = 'source-over';
+    ctx.filter = 'url(#gam) contrast(1.12) saturate(1.2)'; ctx.globalCompositeOperation = 'copy'; ctx.drawImage(window.__tmp, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+  }
   if (postMul < 0.999) { const v = Math.round(postMul * 255); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; }
   ctx.restore();
   drawOverlay(ctx, t, r, DATA, renderer.domElement);
