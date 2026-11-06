@@ -1,0 +1,7 @@
+node_modules
+build/
+models/
+*.tmp.mp4
+data/
+build/
+voiceover_raw.mp3

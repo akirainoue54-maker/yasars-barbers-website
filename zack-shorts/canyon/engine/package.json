@@ -1,0 +1,18 @@
+{
+ "name": "engine",
+ "version": "1.0.0",
+ "description": "",
+ "main": "index.js",
+ "scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1"
+ },
+ "keywords": [],
+ "author": "",
+ "license": "ISC",
+ "dependencies": {
+  "@fontsource/montserrat": "^5.3.0",
+  "@fontsource/noto-color-emoji": "^5.3.2",
+  "three": "^0.170.0"
+ },
+ "type": "commonjs"
+}
